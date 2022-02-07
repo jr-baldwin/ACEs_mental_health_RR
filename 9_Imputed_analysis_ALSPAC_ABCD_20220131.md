@@ -8,174 +8,199 @@ Jessie Baldwin
 -   [ABCD - Load imputed data and create
     variables](#abcd---load-imputed-data-and-create-variables)
 -   [Hypothesis 1A](#hypothesis-1a)
-    -   [Association between PGSs for psychopathology and
-        ACEs](#association-between-pgss-for-psychopathology-and-aces)
-        -   [Define function to format results for the association
-            between PGSs for psychopathology and
-            ACEs](#define-function-to-format-results-for-the-association-between-pgss-for-psychopathology-and-aces)
-        -   [ALSPAC - Run regressions for associations between PGSs for
+    -   [Define function to format results for the association between
+        PGSs for psychopathology and
+        ACEs](#define-function-to-format-results-for-the-association-between-pgss-for-psychopathology-and-aces)
+    -   [ALSPAC - Association between PGSs for psychopathology and
+        ACEs](#alspac---association-between-pgss-for-psychopathology-and-aces)
+        -   [Run regressions for associations between PGSs for
             psychopathology and
-            ACEs](#alspac---run-regressions-for-associations-between-pgss-for-psychopathology-and-aces)
-        -   [ALSPAC - Get correlation between
-            ACEs](#alspac---get-correlation-between-aces)
-        -   [ALSPAC - Prepare to run aggregate
-            model](#alspac---prepare-to-run-aggregate-model)
-        -   [ALSPAC - Run aggregate meta-analysis to pool results across
+            ACEs](#run-regressions-for-associations-between-pgss-for-psychopathology-and-aces)
+        -   [Get correlation between ACEs for aggregate
+            model](#get-correlation-between-aces-for-aggregate-model)
+        -   [Prepare to run aggregate model for association between
+            psychopathology PGSs and
+            ACEs](#prepare-to-run-aggregate-model-for-association-between-psychopathology-pgss-and-aces)
+        -   [Run aggregate meta-analysis to pool results across
             individual regressions for psychopathology PGSs and
-            ACEs](#alspac---run-aggregate-meta-analysis-to-pool-results-across-individual-regressions-for-psychopathology-pgss-and-aces)
-        -   [ALSPAC - Prepare to make forest plot for associations
-            between PGSs for psychopathology and
-            ACEs](#alspac---prepare-to-make-forest-plot-for-associations-between-pgss-for-psychopathology-and-aces)
+            ACEs](#run-aggregate-meta-analysis-to-pool-results-across-individual-regressions-for-psychopathology-pgss-and-aces)
+        -   [Prepare to make forest plot for associations between PGSs
+            for psychopathology and
+            ACEs](#prepare-to-make-forest-plot-for-associations-between-pgss-for-psychopathology-and-aces)
     -   [ALSPAC - Association between negative control PGSs and
         ACEs](#alspac---association-between-negative-control-pgss-and-aces)
-        -   [ALSPAC - Run regressions for associations between negative
-            control PGSs and
-            ACEs](#alspac---run-regressions-for-associations-between-negative-control-pgss-and-aces)
-        -   [ALSPAC - Prepare to run aggregate model for negative
-            controls and
-            ACEs](#alspac---prepare-to-run-aggregate-model-for-negative-controls-and-aces)
-        -   [ALSPAC - Run aggregate model for negative
-            controls](#alspac---run-aggregate-model-for-negative-controls)
-        -   [ALSPAC - Prepare to make forest plot for negative
-            controls](#alspac---prepare-to-make-forest-plot-for-negative-controls)
-        -   [ALSPAC - Combine forest plot for psychiatric PGSs and
-            negative control
-            PGSs](#alspac---combine-forest-plot-for-psychiatric-pgss-and-negative-control-pgss)
-        -   [ABCD - Run regressions for associations between PGSs for
+        -   [Run regressions for associations between negative control
+            PGSs and
+            ACEs](#run-regressions-for-associations-between-negative-control-pgss-and-aces)
+        -   [Prepare to run aggregate model for negative control PGSs
+            and
+            ACEs](#prepare-to-run-aggregate-model-for-negative-control-pgss-and-aces)
+        -   [Run aggregate model for negative control PGSs and
+            ACEs](#run-aggregate-model-for-negative-control-pgss-and-aces)
+        -   [Prepare to make forest plot for negative
+            controls](#prepare-to-make-forest-plot-for-negative-controls)
+    -   [ALSPAC - Make forest plot for associations between psychiatric
+        and negative control PGSs and
+        ACEs](#alspac---make-forest-plot-for-associations-between-psychiatric-and-negative-control-pgss-and-aces)
+    -   [ABCD - Association between PGSs for psychopathology and
+        ACEs](#abcd---association-between-pgss-for-psychopathology-and-aces)
+        -   [Run regressions for associations between PGSs for
             psychopathology and
-            ACEs](#abcd---run-regressions-for-associations-between-pgss-for-psychopathology-and-aces)
-        -   [ABCD - Get correlation between ACEs for aggregate
-            model](#abcd---get-correlation-between-aces-for-aggregate-model)
-        -   [ABCD - Prepare to run aggregate
-            model](#abcd---prepare-to-run-aggregate-model)
-        -   [ABCD - Run aggregate meta-analysis to pool results across
+            ACEs](#run-regressions-for-associations-between-pgss-for-psychopathology-and-aces-1)
+        -   [Get correlation between ACEs for aggregate
+            model](#get-correlation-between-aces-for-aggregate-model-1)
+        -   [Prepare to run aggregate model for association between
+            psychopathology PGSs and
+            ACEs](#prepare-to-run-aggregate-model-for-association-between-psychopathology-pgss-and-aces-1)
+        -   [Run aggregate meta-analysis to pool results across
             individual regressions for psychopathology PGSs and
-            ACEs](#abcd---run-aggregate-meta-analysis-to-pool-results-across-individual-regressions-for-psychopathology-pgss-and-aces)
-        -   [ABCD - Prepare to make forest plot for associations between
-            PGSs for psychopathology and
-            ACEs](#abcd---prepare-to-make-forest-plot-for-associations-between-pgss-for-psychopathology-and-aces)
+            ACEs](#run-aggregate-meta-analysis-to-pool-results-across-individual-regressions-for-psychopathology-pgss-and-aces-1)
+        -   [Prepare to make forest plot for associations between PGSs
+            for psychopathology and
+            ACEs](#prepare-to-make-forest-plot-for-associations-between-pgss-for-psychopathology-and-aces-1)
     -   [ABCD - Association between negative control PGSs and
         ACEs](#abcd---association-between-negative-control-pgss-and-aces)
-        -   [ABCD - Run regressions for negative
-            controls](#abcd---run-regressions-for-negative-controls)
-        -   [ABCD - Prepare to run aggregate
-            model](#abcd---prepare-to-run-aggregate-model-1)
-        -   [Run aggregate model for negative
-            controls](#run-aggregate-model-for-negative-controls)
-        -   [ABCD - Prepare to make forest plot for negative
-            controls](#abcd---prepare-to-make-forest-plot-for-negative-controls)
-        -   [ABCD - Combine forest plot for psychiatric PGSs and
-            negative control
-            PGSs](#abcd---combine-forest-plot-for-psychiatric-pgss-and-negative-control-pgss)
+        -   [Run regressions between negative control PGSs and
+            ACEs](#run-regressions-between-negative-control-pgss-and-aces)
+        -   [Prepare to run aggregate model for negative control PGSs
+            and
+            ACEs](#prepare-to-run-aggregate-model-for-negative-control-pgss-and-aces-1)
+        -   [Run aggregate model for negative control PGSs and
+            ACEs](#run-aggregate-model-for-negative-control-pgss-and-aces-1)
+        -   [Prepare to make forest plot for negative
+            controls](#prepare-to-make-forest-plot-for-negative-controls-1)
+    -   [ABCD - Make forest plot for associations between psychiatric
+        and negative control PGSs and
+        ACEs](#abcd---make-forest-plot-for-associations-between-psychiatric-and-negative-control-pgss-and-aces)
 -   [Hypothesis 1B](#hypothesis-1b)
-    -   [ALSPAC - Specify SEM](#alspac---specify-sem)
-    -   [ALSPAC - Fit model and run Wald test to assess differences
-        between polygenic
-        scores](#alspac---fit-model-and-run-wald-test-to-assess-differences-between-polygenic-scores)
-    -   [ALSPAC - Run pairwise comparisons to test which polygenic
-        scores
-        differ](#alspac---run-pairwise-comparisons-to-test-which-polygenic-scores-differ)
-    -   [ABCD - Specify SEM](#abcd---specify-sem)
-    -   [ABCD - Fit model and run Wald test to assess differences
-        between polygenic
-        scores](#abcd---fit-model-and-run-wald-test-to-assess-differences-between-polygenic-scores)
-    -   [Run ABCD - pairwise comparisons to test which polygenic scores
-        differ in
-        ABCD](#run-abcd---pairwise-comparisons-to-test-which-polygenic-scores-differ-in-abcd)
-    -   [Combine ALSPAC and ABCD
-        figures](#combine-alspac-and-abcd-figures)
--   [Hypothesis 1C - ALSPAC](#hypothesis-1c---alspac)
-    -   [ALSPAC - Specify SEM](#alspac---specify-sem-1)
-    -   [ALSPAC - Fit model and run Wald
-        test](#alspac---fit-model-and-run-wald-test)
-    -   [ALSPAC - Run pairwise comparisons to test whether differences
-        between ACEs fall within the equivalence
-        bounds](#alspac---run-pairwise-comparisons-to-test-whether-differences-between-aces-fall-within-the-equivalence-bounds)
--   [Hypothesis 1C - ABCD](#hypothesis-1c---abcd)
-    -   [ALSPAC - Specify SEM](#alspac---specify-sem-2)
-    -   [ABCD - Fit model and run Wald
-        test](#abcd---fit-model-and-run-wald-test)
-    -   [ABCD - Run pairwise comparisons to test whether differences
-        between ACEs fall within the equivalence
-        bounds](#abcd---run-pairwise-comparisons-to-test-whether-differences-between-aces-fall-within-the-equivalence-bounds)
+    -   [ALSPAC - differences between polygenic scores in their
+        association with
+        ACEs](#alspac---differences-between-polygenic-scores-in-their-association-with-aces)
+        -   [Specify SEM](#specify-sem)
+        -   [Fit model and run Wald test to assess differences between
+            polygenic
+            scores](#fit-model-and-run-wald-test-to-assess-differences-between-polygenic-scores)
+        -   [Run pairwise comparisons to test which polygenic scores
+            differ](#run-pairwise-comparisons-to-test-which-polygenic-scores-differ)
+    -   [ABCD Study - differences between polygenic scores in their
+        association with
+        ACEs](#abcd-study---differences-between-polygenic-scores-in-their-association-with-aces)
+        -   [Specify SEM](#specify-sem-1)
+        -   [Fit model and run Wald test to assess differences between
+            polygenic
+            scores](#fit-model-and-run-wald-test-to-assess-differences-between-polygenic-scores-1)
+        -   [Run pairwise comparisons to test which polygenic scores
+            differ in
+            ABCD](#run-pairwise-comparisons-to-test-which-polygenic-scores-differ-in-abcd)
+    -   [Make figure with ALSPAC and ABCD pairwise
+        comparisons](#make-figure-with-alspac-and-abcd-pairwise-comparisons)
+-   [Hypothesis 1C](#hypothesis-1c)
+    -   [ALSPAC - differences between ACEs in their association with
+        polygenic
+        scores](#alspac---differences-between-aces-in-their-association-with-polygenic-scores)
+        -   [Specify SEM](#specify-sem-2)
+        -   [Fit model and run Wald test](#fit-model-and-run-wald-test)
+        -   [Run pairwise comparisons to test whether differences
+            between ACEs fall within the equivalence
+            bounds](#run-pairwise-comparisons-to-test-whether-differences-between-aces-fall-within-the-equivalence-bounds)
+    -   [ABCD - differences between ACEs in their association with
+        polygenic
+        scores](#abcd---differences-between-aces-in-their-association-with-polygenic-scores)
+        -   [Specify SEM](#specify-sem-3)
+        -   [Fit model and run Wald
+            test](#fit-model-and-run-wald-test-1)
+        -   [Run pairwise comparisons to test whether differences
+            between ACEs fall within the equivalence
+            bounds](#run-pairwise-comparisons-to-test-whether-differences-between-aces-fall-within-the-equivalence-bounds-1)
     -   [Create figure with ALSPAC and ABCD data for differences between
         ACEs in polygenic risk for mental health
         problems](#create-figure-with-alspac-and-abcd-data-for-differences-between-aces-in-polygenic-risk-for-mental-health-problems)
 -   [Hypothesis 2A](#hypothesis-2a)
--   [Specify SEM](#specify-sem)
+    -   [Specify SEM](#specify-sem-4)
     -   [Define function to extract
         results](#define-function-to-extract-results)
-    -   [ALSPAC - Run models for internalising
-        problems](#alspac---run-models-for-internalising-problems)
-    -   [ALSPAC - Extract results for internalising problems into a
-        dataframe](#alspac---extract-results-for-internalising-problems-into-a-dataframe)
-        -   [ALSPAC - Get correlation between
-            ACEs](#alspac---get-correlation-between-aces-1)
-    -   [Aggregate results for proportions explained by polygenic
-        scores](#aggregate-results-for-proportions-explained-by-polygenic-scores)
-    -   [Run models for externalising
-        problems](#run-models-for-externalising-problems)
-    -   [ALSPAC Define function to extract results for externalising
-        (edit function for parental substance abuse as used
-        ordered=ACE)](#alspac-define-function-to-extract-results-for-externalising-edit-function-for-parental-substance-abuse-as-used-orderedace)
-    -   [ALSPAC - Extract results for externalising problems into a
-        dataframe](#alspac---extract-results-for-externalising-problems-into-a-dataframe)
-    -   [ALSPAC - Aggregate results for proportions explained by
-        polygenic
-        scores](#alspac---aggregate-results-for-proportions-explained-by-polygenic-scores)
-    -   [ALSPAC - Generate table of
-        results](#alspac---generate-table-of-results)
-        -   [ALSPAC - Plot internalising and externalising results for
-            hyp2a](#alspac---plot-internalising-and-externalising-results-for-hyp2a)
-        -   [ALSPAC - Repeat analysis for negative control polygenic
-            scores](#alspac---repeat-analysis-for-negative-control-polygenic-scores)
+    -   [ALSPAC - Estimate proportion of association between ACEs &
+        internalising problems explained by
+        PGSs](#alspac---estimate-proportion-of-association-between-aces--internalising-problems-explained-by-pgss)
+        -   [Run models for internalising
+            problems](#run-models-for-internalising-problems)
+        -   [Extract results for internalising problems into a
+            dataframe](#extract-results-for-internalising-problems-into-a-dataframe)
+        -   [Get correlation between
+            ACEs](#get-correlation-between-aces)
+        -   [Aggregate results for proportions explained by polygenic
+            scores](#aggregate-results-for-proportions-explained-by-polygenic-scores)
+    -   [ALSPAC - Estimate proportion of association between ACEs &
+        externalising problems explained by
+        PGSs](#alspac---estimate-proportion-of-association-between-aces--externalising-problems-explained-by-pgss)
+        -   [Run models for externalising
+            problems](#run-models-for-externalising-problems)
+        -   [Define function to extract results for
+            externalising](#define-function-to-extract-results-for-externalising)
+        -   [Extract results for externalising problems into a
+            dataframe](#extract-results-for-externalising-problems-into-a-dataframe)
+        -   [Aggregate results for proportions explained by polygenic
+            scores](#aggregate-results-for-proportions-explained-by-polygenic-scores-1)
+        -   [Generate table of results](#generate-table-of-results)
+    -   [ALSPAC - Plot internalising and externalising results for
+        hypothesis
+        2a](#alspac---plot-internalising-and-externalising-results-for-hypothesis-2a)
+    -   [ALSPAC - Estimate proportion of association between ACEs &
+        mental health problems explained by negative control
+        PGSs](#alspac---estimate-proportion-of-association-between-aces--mental-health-problems-explained-by-negative-control-pgss)
         -   [Run models for negative controls and internalising
             problems](#run-models-for-negative-controls-and-internalising-problems)
-        -   [ALSPAC - Aggregate results for proportions of associations
-            with internalising problems explained by negative control
+        -   [Aggregate results for proportions of associations with
+            internalising problems explained by negative control
             polygenic
-            scores](#alspac---aggregate-results-for-proportions-of-associations-with-internalising-problems-explained-by-negative-control-polygenic-scores)
-        -   [ALSPAC - Run models for negative controls and externalising
-            problems](#alspac---run-models-for-negative-controls-and-externalising-problems)
-        -   [ALSPAC - Aggregate results for proportions of associations
-            with externalising problems explained by negative control
+            scores](#aggregate-results-for-proportions-of-associations-with-internalising-problems-explained-by-negative-control-polygenic-scores)
+        -   [Run models for negative controls and externalising
+            problems](#run-models-for-negative-controls-and-externalising-problems)
+        -   [Aggregate results for proportions of associations with
+            externalising problems explained by negative control
             polygenic
-            scores](#alspac---aggregate-results-for-proportions-of-associations-with-externalising-problems-explained-by-negative-control-polygenic-scores)
-    -   [Remove models saved for ALSPAC
-        data](#remove-models-saved-for-alspac-data)
-    -   [ABCD - Run models for internalising
-        problems](#abcd---run-models-for-internalising-problems)
-    -   [Define function to extract results (edit function for
-        maltreatment and parental criminality as used
-        ordered=ACE)](#define-function-to-extract-results-edit-function-for-maltreatment-and-parental-criminality-as-used-orderedace)
-    -   [ABCD - Extract results for internalising problems into a
-        dataframe](#abcd---extract-results-for-internalising-problems-into-a-dataframe)
-        -   [ABCD - Get correlation between ACEs for aggregate
-            model](#abcd---get-correlation-between-aces-for-aggregate-model-1)
-    -   [ABCD - Aggregate results for proportions explained by polygenic
-        scores](#abcd---aggregate-results-for-proportions-explained-by-polygenic-scores)
-    -   [ABCD - Run models for externalising
-        problems](#abcd---run-models-for-externalising-problems)
-    -   [ABCD - Extract results for externalising problems into a
-        dataframe](#abcd---extract-results-for-externalising-problems-into-a-dataframe)
-    -   [ABCD -Aggregate results for proportions explained by polygenic
-        scores](#abcd--aggregate-results-for-proportions-explained-by-polygenic-scores)
+            scores](#aggregate-results-for-proportions-of-associations-with-externalising-problems-explained-by-negative-control-polygenic-scores)
+    -   [ABCD - Estimate proportion of association between ACEs &
+        internalising problems explained by
+        PGSs](#abcd---estimate-proportion-of-association-between-aces--internalising-problems-explained-by-pgss)
+        -   [Run models for internalising
+            problems](#run-models-for-internalising-problems-1)
+        -   [Define function to extract
+            results](#define-function-to-extract-results-1)
+        -   [Extract results for internalising problems into a
+            dataframe](#extract-results-for-internalising-problems-into-a-dataframe-1)
+        -   [Get correlation between ACEs for aggregate
+            model](#get-correlation-between-aces-for-aggregate-model-2)
+        -   [Aggregate results for proportions explained by polygenic
+            scores](#aggregate-results-for-proportions-explained-by-polygenic-scores-2)
+    -   [ABCD - Estimate proportion of association between ACEs &
+        externalising problems explained by
+        PGSs](#abcd---estimate-proportion-of-association-between-aces--externalising-problems-explained-by-pgss)
+        -   [Run models for externalising
+            problems](#run-models-for-externalising-problems-1)
+        -   [Extract results for externalising problems into a
+            dataframe](#extract-results-for-externalising-problems-into-a-dataframe-1)
+        -   [Aggregate results for proportions explained by polygenic
+            scores](#aggregate-results-for-proportions-explained-by-polygenic-scores-3)
         -   [ABCD - Plot internalising and externalising results for
-            hyp2a](#abcd---plot-internalising-and-externalising-results-for-hyp2a)
-        -   [ABCD - Run models for negative controls and internalising
-            problems](#abcd---run-models-for-negative-controls-and-internalising-problems)
-        -   [ABCD - Aggregate results for proportions of associations
-            with internalising problems explained by negative control
+            hypothesis
+            2a](#abcd---plot-internalising-and-externalising-results-for-hypothesis-2a)
+        -   [Generate table of results](#generate-table-of-results-1)
+    -   [ABCD - Estimate proportion of association between ACEs & mental
+        health problems explained by negative control
+        PGSs](#abcd---estimate-proportion-of-association-between-aces--mental-health-problems-explained-by-negative-control-pgss)
+        -   [Run models for negative controls and internalising
+            problems](#run-models-for-negative-controls-and-internalising-problems-1)
+        -   [Aggregate results for proportions of associations with
+            internalising problems explained by negative control
             polygenic
-            scores](#abcd---aggregate-results-for-proportions-of-associations-with-internalising-problems-explained-by-negative-control-polygenic-scores)
-        -   [ABCD - Run models for negative controls and externalising
-            problems](#abcd---run-models-for-negative-controls-and-externalising-problems)
-        -   [ABCD - Aggregate results for proportions of associations
-            with externalising problems explained by negative control
+            scores](#aggregate-results-for-proportions-of-associations-with-internalising-problems-explained-by-negative-control-polygenic-scores-1)
+        -   [Run models for negative controls and externalising
+            problems](#run-models-for-negative-controls-and-externalising-problems-1)
+        -   [Aggregate results for proportions of associations with
+            externalising problems explained by negative control
             polygenic
-            scores](#abcd---aggregate-results-for-proportions-of-associations-with-externalising-problems-explained-by-negative-control-polygenic-scores)
-    -   [ABCD - Generate table of
-        results](#abcd---generate-table-of-results)
+            scores](#aggregate-results-for-proportions-of-associations-with-externalising-problems-explained-by-negative-control-polygenic-scores-1)
     -   [Make table with ALSPAC and ABCD results for hypothesis
         2a](#make-table-with-alspac-and-abcd-results-for-hypothesis-2a)
 -   [Hypothesis 2B](#hypothesis-2b)
@@ -183,48 +208,52 @@ Jessie Baldwin
         proportions](#define-gsens-function-for-proportions)
     -   [Define functions for formatting Gsens
         results](#define-functions-for-formatting-gsens-results)
-    -   [ALSPAC - Step 1. Obtain correlation between the ACE and the
-        mental health outcome (c
-        path)](#alspac---step-1-obtain-correlation-between-the-ace-and-the-mental-health-outcome-c-path)
-    -   [ALSPAC - Step 2. Obtain correlation between observed polygenic
-        scores for mental health problems and the ACE (a
-        path)](#alspac---step-2-obtain-correlation-between-observed-polygenic-scores-for-mental-health-problems-and-the-ace-a-path)
-    -   [ALSPAC - Step 3. Obtain correlation between observed polygenic
-        scores and the mental health outcome (b
-        path)](#alspac---step-3-obtain-correlation-between-observed-polygenic-scores-and-the-mental-health-outcome-b-path)
-    -   [ALSPAC - Run Gsens for internalising
-        problems](#alspac---run-gsens-for-internalising-problems)
-    -   [ALSPAC - Run Gsens for externalising
-        problems](#alspac---run-gsens-for-externalising-problems)
-    -   [ALSPAC - Pool gsens results using all PGSs and format for
-        table/plot](#alspac---pool-gsens-results-using-all-pgss-and-format-for-tableplot)
-    -   [ALSPAC - Plot Gsens results](#alspac---plot-gsens-results)
-    -   [Arrange ALSPAC plots for hypotheses 2a and
-        2b](#arrange-alspac-plots-for-hypotheses-2a-and-2b)
-    -   [ALSPAC - Make table showing correlations between PGSs and
-        outcomes](#alspac---make-table-showing-correlations-between-pgss-and-outcomes)
-    -   [ABCD - Repeat Gsens analyses in
-        ABCD](#abcd---repeat-gsens-analyses-in-abcd)
-    -   [ABCD - Step 1. Obtain correlation between the ACE and the
-        mental health
-        outcome](#abcd---step-1-obtain-correlation-between-the-ace-and-the-mental-health-outcome)
-    -   [ABCD - Step 2. Obtain correlation between observed polygenic
-        scores for mental health problems and the ACE (a
-        path)](#abcd---step-2-obtain-correlation-between-observed-polygenic-scores-for-mental-health-problems-and-the-ace-a-path)
-    -   [ABCD - Step 3. Obtain correlation between observed polygenic
-        scores and the mental health outcome (b
-        path)](#abcd---step-3-obtain-correlation-between-observed-polygenic-scores-and-the-mental-health-outcome-b-path)
-    -   [ABCD - Run Gsens for internalising
-        problems](#abcd---run-gsens-for-internalising-problems)
-    -   [ABCD - Run Gsens for externalising
-        problems](#abcd---run-gsens-for-externalising-problems)
-    -   [ABCD - Pool gsens results and format for
-        table/plot](#abcd---pool-gsens-results-and-format-for-tableplot)
-    -   [ABCD - Plot Gsens results](#abcd---plot-gsens-results)
-    -   [Arrange ABCD plots for hypotheses 2a and
-        2b](#arrange-abcd-plots-for-hypotheses-2a-and-2b)
-    -   [ABCD - Make table showing correlations between PGSs and
-        outcomes](#abcd---make-table-showing-correlations-between-pgss-and-outcomes)
+    -   [ALSPAC - Estimate proportion of association between ACEs &
+        mental health problems explained by latent PGSs
+        (Gsens)](#alspac---estimate-proportion-of-association-between-aces--mental-health-problems-explained-by-latent-pgss-gsens)
+        -   [Step 1. Obtain correlation between the ACE and the mental
+            health outcome (c
+            path)](#step-1-obtain-correlation-between-the-ace-and-the-mental-health-outcome-c-path)
+        -   [Step 2. Obtain correlation between observed polygenic
+            scores for mental health problems and the ACE (a
+            path)](#step-2-obtain-correlation-between-observed-polygenic-scores-for-mental-health-problems-and-the-ace-a-path)
+        -   [Step 3. Obtain correlation between observed polygenic
+            scores and the mental health outcome (b
+            path)](#step-3-obtain-correlation-between-observed-polygenic-scores-and-the-mental-health-outcome-b-path)
+        -   [Run Gsens for internalising
+            problems](#run-gsens-for-internalising-problems)
+        -   [Run Gsens for externalising
+            problems](#run-gsens-for-externalising-problems)
+        -   [Pool gsens results using all PGSs and format for
+            table/plot](#pool-gsens-results-using-all-pgss-and-format-for-tableplot)
+        -   [Plot Gsens results](#plot-gsens-results)
+        -   [Arrange ALSPAC plots for hypotheses 2a and
+            2b](#arrange-alspac-plots-for-hypotheses-2a-and-2b)
+        -   [Make table showing correlations between PGSs and
+            outcomes](#make-table-showing-correlations-between-pgss-and-outcomes)
+    -   [ABCD - Estimate proportion of association between ACEs & mental
+        health problems explained by latent PGSs
+        (Gsens)](#abcd---estimate-proportion-of-association-between-aces--mental-health-problems-explained-by-latent-pgss-gsens)
+        -   [Step 1. Obtain correlation between the ACE and the mental
+            health
+            outcome](#step-1-obtain-correlation-between-the-ace-and-the-mental-health-outcome)
+        -   [Step 2. Obtain correlation between observed polygenic
+            scores for mental health problems and the ACE (a
+            path)](#step-2-obtain-correlation-between-observed-polygenic-scores-for-mental-health-problems-and-the-ace-a-path-1)
+        -   [Step 3. Obtain correlation between observed polygenic
+            scores and the mental health outcome (b
+            path)](#step-3-obtain-correlation-between-observed-polygenic-scores-and-the-mental-health-outcome-b-path-1)
+        -   [Run Gsens for internalising
+            problems](#run-gsens-for-internalising-problems-1)
+        -   [Run Gsens for externalising
+            problems](#run-gsens-for-externalising-problems-1)
+        -   [Pool gsens results and format for
+            table/plot](#pool-gsens-results-and-format-for-tableplot)
+        -   [Plot Gsens results](#plot-gsens-results-1)
+        -   [Arrange ABCD plots for hypotheses 2a and
+            2b](#arrange-abcd-plots-for-hypotheses-2a-and-2b)
+        -   [Make table showing correlations between PGSs and
+            outcomes](#make-table-showing-correlations-between-pgss-and-outcomes-1)
     -   [Make table with ALSPAC and ABCD Gsens results for hypothesis
         2b](#make-table-with-alspac-and-abcd-gsens-results-for-hypothesis-2b)
     -   [Make table with variance explained in ACEs and mental health
@@ -320,9 +349,7 @@ a.out_abcd <- transform(a.out_abcd, ADHD_PGS_r = scale(ADHD_PGS_r),
 
 # Hypothesis 1A
 
-## Association between PGSs for psychopathology and ACEs
-
-### Define function to format results for the association between PGSs for psychopathology and ACEs
+## Define function to format results for the association between PGSs for psychopathology and ACEs
 
 ``` r
 format_res <- function(adhd, alcohol, antisocial, anxiety, autism, bipolar, depression, schizophrenia) {
@@ -347,7 +374,9 @@ format_res <- function(adhd, alcohol, antisocial, anxiety, autism, bipolar, depr
 }
 ```
 
-### ALSPAC - Run regressions for associations between PGSs for psychopathology and ACEs
+## ALSPAC - Association between PGSs for psychopathology and ACEs
+
+### Run regressions for associations between PGSs for psychopathology and ACEs
 
 ``` r
 # Maltreatment
@@ -433,7 +462,7 @@ schizophrenia <- zelig(parental_separation_0_9.5yrs ~ schizophrenia_PGS_r + sex,
 par_sep <- format_res(adhd, alcohol, antisocial, anxiety, autism, bipolar, depression, schizophrenia)
 ```
 
-### ALSPAC - Get correlation between ACEs
+### Get correlation between ACEs for aggregate model
 
 ``` r
 # The correlation between ACEs is necessary to specify in the aggregate model (to run later) as the level of dependency between effect sizes 
@@ -456,7 +485,7 @@ mean_ace_cor_alspac <- mean(ace_cor_alspac_nodiag, na.rm=TRUE)
 mean_ace_cor_alspac
 ```
 
-### ALSPAC - Prepare to run aggregate model
+### Prepare to run aggregate model for association between psychopathology PGSs and ACEs
 
 ``` r
 # Bind all results from regression models into one dataframe
@@ -481,7 +510,7 @@ long_results$log_OR <- log(long_results$OR)
 long_results$id <- 1
 ```
 
-### ALSPAC - Run aggregate meta-analysis to pool results across individual regressions for psychopathology PGSs and ACEs
+### Run aggregate meta-analysis to pool results across individual regressions for psychopathology PGSs and ACEs
 
 ``` r
 aggregate <- agg(id, log_OR, var, cor=mean_ace_cor_alspac, method = "BHHR", mod=NULL, data=long_results)
@@ -503,7 +532,7 @@ p <- exp(-0.717*z - 0.416*z^2)
 p 
 ```
 
-### ALSPAC - Prepare to make forest plot for associations between PGSs for psychopathology and ACEs
+### Prepare to make forest plot for associations between PGSs for psychopathology and ACEs
 
 ``` r
 # Add FDR corrected p-values
@@ -546,7 +575,7 @@ df_forest$long_results.p_fdr <- format(round(df_forest$long_results.p_fdr, 4), n
 
 ## ALSPAC - Association between negative control PGSs and ACEs
 
-### ALSPAC - Run regressions for associations between negative control PGSs and ACEs
+### Run regressions for associations between negative control PGSs and ACEs
 
 ``` r
 ## Associations between handedness PGS and ACEs
@@ -566,7 +595,7 @@ par_crim_cataracts <- zelig(parent_convicted_offence_0_9.5yrs ~ scale(cataracts_
 par_sep_cataracts <- zelig(parental_separation_0_9.5yrs ~ scale(cataracts_PGS_r) + sex, model="logit", data=a.out_alspac, cite=FALSE)
 ```
 
-### ALSPAC - Prepare to run aggregate model for negative controls and ACEs
+### Prepare to run aggregate model for negative control PGSs and ACEs
 
 ``` r
 ## Extract results
@@ -625,7 +654,7 @@ neg_control_data$log_OR <- log(neg_control_data$OR)
 neg_control_data$id <- 1
 ```
 
-### ALSPAC - Run aggregate model for negative controls
+### Run aggregate model for negative control PGSs and ACEs
 
 ``` r
 aggregate_nc <- agg(id, log_OR, var, cor=mean_ace_cor_alspac, method = "BHHR", mod=NULL, data=neg_control_data)
@@ -645,7 +674,7 @@ p_nc <- exp(0.717*neg_control_z - 0.416*neg_control_z^2)
 p_nc
 ```
 
-### ALSPAC - Prepare to make forest plot for negative controls
+### Prepare to make forest plot for negative controls
 
 ``` r
 # Add FDR corrected pvalues
@@ -681,7 +710,7 @@ df_forest_nc <- data.frame(nc_results$PGS, nc_results$p_fdr)
 df_forest_nc$nc_results.p_fdr <- format(round(df_forest_nc$nc_results.p_fdr, 4), nsmall=4)
 ```
 
-### ALSPAC - Combine forest plot for psychiatric PGSs and negative control PGSs
+## ALSPAC - Make forest plot for associations between psychiatric and negative control PGSs and ACEs
 
 ``` r
 dev.off()
@@ -741,7 +770,9 @@ abline(h=1.25)
 dev.off()
 ```
 
-### ABCD - Run regressions for associations between PGSs for psychopathology and ACEs
+## ABCD - Association between PGSs for psychopathology and ACEs
+
+### Run regressions for associations between PGSs for psychopathology and ACEs
 
 ``` r
 # Maltreatment
@@ -827,7 +858,7 @@ schizophrenia <- zelig(parental_separation ~ schizophrenia_PGS_r + sex, model="l
 par_sep <- format_res(adhd, alcohol, antisocial, anxiety, autism, bipolar, depression, schizophrenia)
 ```
 
-### ABCD - Get correlation between ACEs for aggregate model
+### Get correlation between ACEs for aggregate model
 
 ``` r
 # The correlation between ACEs is necessary to specify in the aggregate model (to run later) as the level of dependency between effect sizes 
@@ -851,7 +882,7 @@ mean_ace_cor_abcd <- mean(ace_cor_abcd_nodiag, na.rm=TRUE) # r=0.31
 mean_ace_cor_abcd
 ```
 
-### ABCD - Prepare to run aggregate model
+### Prepare to run aggregate model for association between psychopathology PGSs and ACEs
 
 ``` r
 # Bind all results into one dataframe
@@ -875,7 +906,7 @@ long_results$log_OR <- log(long_results$OR)
 long_results$id <- 1
 ```
 
-### ABCD - Run aggregate meta-analysis to pool results across individual regressions for psychopathology PGSs and ACEs
+### Run aggregate meta-analysis to pool results across individual regressions for psychopathology PGSs and ACEs
 
 ``` r
 aggregate <- agg(id, log_OR, var, cor=mean_ace_cor_abcd, method = "BHHR", mod=NULL, data=long_results)
@@ -897,7 +928,7 @@ p <- exp(-0.717*z - 0.416*z^2)
 p 
 ```
 
-### ABCD - Prepare to make forest plot for associations between PGSs for psychopathology and ACEs
+### Prepare to make forest plot for associations between PGSs for psychopathology and ACEs
 
 ``` r
 # Add FDR corrected pvalues
@@ -937,7 +968,7 @@ df_forest$long_results.p_fdr <- format(round(df_forest$long_results.p_fdr, 4), n
 
 ## ABCD - Association between negative control PGSs and ACEs
 
-### ABCD - Run regressions for negative controls
+### Run regressions between negative control PGSs and ACEs
 
 ``` r
 ## Associations between handedness PGS and ACEs
@@ -957,7 +988,7 @@ par_crim_cataracts <- zelig(parental_criminality ~ scale(cataracts_PGS_r) + sex,
 par_sep_cataracts <- zelig(parental_separation ~ scale(cataracts_PGS_r) + sex, model="logit", data=a.out_abcd, cite=FALSE)
 ```
 
-### ABCD - Prepare to run aggregate model
+### Prepare to run aggregate model for negative control PGSs and ACEs
 
 ``` r
 ## Extract results
@@ -1013,7 +1044,7 @@ neg_control_data$log_OR <- log(neg_control_data$OR)
 neg_control_data$id <- 1
 ```
 
-### Run aggregate model for negative controls
+### Run aggregate model for negative control PGSs and ACEs
 
 ``` r
 aggregate_nc <- agg(id, log_OR, var, cor=mean_ace_cor_abcd, method = "BHHR", mod=NULL, data=neg_control_data)
@@ -1033,7 +1064,7 @@ p_nc <- (1 - pnorm(abs(neg_control_z))) * 2 #https://stats.stackexchange.com/que
 p_nc
 ```
 
-### ABCD - Prepare to make forest plot for negative controls
+### Prepare to make forest plot for negative controls
 
 ``` r
 # Add FDR corrected pvalues
@@ -1069,7 +1100,7 @@ rownames(df_forest_nc) <- paste0(nc_results$ace, nc_results$PGS) # make rownames
 df_forest_nc$nc_results.p_fdr <- format(round(as.numeric(df_forest_nc$nc_results.p_fdr), 4), nsmall=4)
 ```
 
-### ABCD - Combine forest plot for psychiatric PGSs and negative control PGSs
+## ABCD - Make forest plot for associations between psychiatric and negative control PGSs and ACEs
 
 ``` r
 dev.off()
@@ -1146,7 +1177,9 @@ par_substance_handedness, parent_psychopathology, results, schizophrenia, se, Ta
 
 # Hypothesis 1B
 
-## ALSPAC - Specify SEM
+## ALSPAC - differences between polygenic scores in their association with ACEs
+
+### Specify SEM
 
 ``` r
 pgs_ace_model <- '
@@ -1197,7 +1230,7 @@ Av_schizophrenia:= (h1 + h2 + h3 + h4 + h5 + h6)/6
 '
 ```
 
-## ALSPAC - Fit model and run Wald test to assess differences between polygenic scores
+### Fit model and run Wald test to assess differences between polygenic scores
 
 ``` r
 ### NOTE: the semTools package will not load with the currently loaded packages, returns an error:
@@ -1220,7 +1253,7 @@ p_any <- lavTestWald.mi(pgs_diff_alspac, constraints =  c("Av_ADHD == Av_alcohol
 p_any["pvalue"]
 ```
 
-## ALSPAC - Run pairwise comparisons to test which polygenic scores differ
+### Run pairwise comparisons to test which polygenic scores differ
 
 ``` r
 # Get each combination of polygenic score effects to compare in pairwise comparisons
@@ -1349,7 +1382,9 @@ pgs_diff_alspac_long$pair_combs <- as.character(paste0(sapply(strsplit((as.chara
 pgs_diff_alspac_long$pair_combs[pgs_diff_alspac_long$pair_combs=="Depression vs. adhd " ] <- "Depression vs. ADHD"
 ```
 
-## ABCD - Specify SEM
+## ABCD Study - differences between polygenic scores in their association with ACEs
+
+### Specify SEM
 
 ``` r
 pgs_ace_model <- '
@@ -1400,7 +1435,7 @@ Av_schizophrenia:=(h1 + h2 + h3 + h4 + h5 + h6)/6
 '
 ```
 
-## ABCD - Fit model and run Wald test to assess differences between polygenic scores
+### Fit model and run Wald test to assess differences between polygenic scores
 
 ``` r
 pgs_diff_abcd <- semTools::runMI(pgs_ace_model, data=a.out_abcd$imputations, fun="lavaan", estimator = "WLSMV",
@@ -1418,7 +1453,7 @@ p_any <- lavTestWald.mi(pgs_diff_abcd, constraints =  c("Av_ADHD == Av_alcohol",
 p_any["pvalue"]
 ```
 
-## Run ABCD - pairwise comparisons to test which polygenic scores differ in ABCD
+### Run pairwise comparisons to test which polygenic scores differ in ABCD
 
 ``` r
 # Get each combination of polygenic score effects to compare in pairwise comparisons
@@ -1522,7 +1557,7 @@ pgs_diff_abcd_long$pair_combs <- as.character(paste0(sapply(strsplit((as.charact
                                   tolower(sapply(strsplit((as.character(pgs_diff_abcd_long$pair_combs)), " vs. "), "[", 2))))
 ```
 
-## Combine ALSPAC and ABCD figures
+## Make figure with ALSPAC and ABCD pairwise comparisons
 
 ``` r
 dev.off()
@@ -1590,9 +1625,11 @@ text(-0.5, c(30, 13), pos=4, c("Statistically significant differences",
 dev.off()
 ```
 
-# Hypothesis 1C - ALSPAC
+# Hypothesis 1C
 
-## ALSPAC - Specify SEM
+## ALSPAC - differences between ACEs in their association with polygenic scores
+
+### Specify SEM
 
 ``` r
 library(lavaan)
@@ -1642,7 +1679,7 @@ Av_par_sep:= (a6 + b6 + c6 + d6 + e6 + f6 + g6 + h6)/8
 '
 ```
 
-## ALSPAC - Fit model and run Wald test
+### Fit model and run Wald test
 
 ``` r
 aces_diff_alspac <- runMI(ace_diffs_model, data=a.out_alspac$imputations, fun="lavaan", estimator = "WLSMV",
@@ -1660,7 +1697,7 @@ p_any <- lavTestWald.mi(aces_diff_alspac, constraints =  c("Av_maltreatment == A
 p_any["pvalue"]
 ```
 
-## ALSPAC - Run pairwise comparisons to test whether differences between ACEs fall within the equivalence bounds
+### Run pairwise comparisons to test whether differences between ACEs fall within the equivalence bounds
 
 ``` r
 # Extract results
@@ -1696,9 +1733,9 @@ ace_diff_alspac$high_ci <- ace_diff_alspac$log_odds_diff_aces + (1.645*ace_diff_
 ace_diff_alspac$pair_combs <- factor(ace_diff_alspac$pair_combs, levels = ace_diff_alspac$pair_combs)
 ```
 
-# Hypothesis 1C - ABCD
+## ABCD - differences between ACEs in their association with polygenic scores
 
-## ALSPAC - Specify SEM
+### Specify SEM
 
 ``` r
 ace_diffs_model_abcd <- '
@@ -1747,7 +1784,7 @@ Av_par_sep:=(a6 + b6 + c6 + d6 + e6 + f6 + g6 + h6)/8
 '
 ```
 
-## ABCD - Fit model and run Wald test
+### Fit model and run Wald test
 
 ``` r
 aces_diff_abcd <- runMI(ace_diffs_model_abcd, data=a.out_abcd$imputations, fun="lavaan", estimator = "WLSMV",
@@ -1766,7 +1803,7 @@ p_any <- lavTestWald.mi(aces_diff_abcd, constraints =  c("Av_maltreatment == Av_
 p_any["pvalue"]
 ```
 
-## ABCD - Run pairwise comparisons to test whether differences between ACEs fall within the equivalence bounds
+### Run pairwise comparisons to test whether differences between ACEs fall within the equivalence bounds
 
 ``` r
 # Extract results
@@ -1860,7 +1897,7 @@ rm(alspac_wald_pairwise_comp, ace_diff_abcd, ace_diff_alspac,
 
 # Hypothesis 2A
 
-# Specify SEM
+## Specify SEM
 
 ``` r
 multi_PGS_model = 
@@ -1964,7 +2001,9 @@ extract_res <- function(fit_maltreatment,
 }
 ```
 
-## ALSPAC - Run models for internalising problems
+## ALSPAC - Estimate proportion of association between ACEs & internalising problems explained by PGSs
+
+### Run models for internalising problems
 
 ``` r
 # Specify that MH = internalising problems, with sex regressed out
@@ -2001,7 +2040,7 @@ fit_int_par_sep <- runMI(multi_PGS_model, data=a.out_alspac$imputations, fun="la
 summary(fit_int_par_sep)
 ```
 
-## ALSPAC - Extract results for internalising problems into a dataframe
+### Extract results for internalising problems into a dataframe
 
 ``` r
 ## Extract results (estimate, low CI, upper CI [plus SE for proportions])
@@ -2023,7 +2062,7 @@ hyp2a_int_alsp <- data.frame(prop, total, confound, adjusted)
 hyp2a_int_alsp <- subset(hyp2a_int_alsp, select = -c(ACE.1, ACE.2, ACE.3)) # drop extra ACE variables
 ```
 
-### ALSPAC - Get correlation between ACEs
+### Get correlation between ACEs
 
 ``` r
 # The correlation between ACEs is necessary to specify in the aggregate model (to run later) as the level of dependency between effect sizes 
@@ -2049,7 +2088,7 @@ mean_ace_cor_alspac <- mean(ace_cor_alspac_nodiag, na.rm=TRUE)
 mean_ace_cor_alspac
 ```
 
-## Aggregate results for proportions explained by polygenic scores
+### Aggregate results for proportions explained by polygenic scores
 
 ``` r
 hyp2a_int_alsp$var <- ((hyp2a_int_alsp$prop_up_ci - hyp2a_int_alsp$prop_low_ci)/3.92)^2 # get variance
@@ -2071,7 +2110,9 @@ upci_model <- est_model + 1.96*se_model
 round((c(est_model, lowci_model, upci_model)),4)*100
 ```
 
-## Run models for externalising problems
+## ALSPAC - Estimate proportion of association between ACEs & externalising problems explained by PGSs
+
+### Run models for externalising problems
 
 ``` r
 ## Maltreatment
@@ -2107,9 +2148,10 @@ fit_ext_par_sep <- runMI(multi_PGS_model, data=a.out_alspac$imputations, fun="la
 summary(fit_ext_par_sep)
 ```
 
-## ALSPAC Define function to extract results for externalising (edit function for parental substance abuse as used ordered=ACE)
+### Define function to extract results for externalising
 
 ``` r
+# Note: needd to edit function as used ordered=ACE for parental substance abuse
 extract_res <- function(fit_maltreatment, 
                         fit_dom_violence,
                         fit_par_psych,
@@ -2145,7 +2187,7 @@ extract_res <- function(fit_maltreatment,
 }
 ```
 
-## ALSPAC - Extract results for externalising problems into a dataframe
+### Extract results for externalising problems into a dataframe
 
 ``` r
 ## Extract results (estimate, low CI, upper CI [plus SE for proportions])
@@ -2167,7 +2209,7 @@ hyp2a_ext_alsp <- data.frame(prop, total, confound, adjusted)
 hyp2a_ext_alsp <- subset(hyp2a_ext_alsp, select = -c(ACE.1, ACE.2, ACE.3)) # drop extra ACE variables
 ```
 
-## ALSPAC - Aggregate results for proportions explained by polygenic scores
+### Aggregate results for proportions explained by polygenic scores
 
 ``` r
 hyp2a_ext_alsp$var <- ((hyp2a_ext_alsp$prop_up_ci - hyp2a_ext_alsp$prop_low_ci)/3.92)^2 # get variance
@@ -2187,7 +2229,7 @@ upci_model <- est_model + 1.96*se_model
 round((c(est_model, lowci_model, upci_model)),4)*100
 ```
 
-## ALSPAC - Generate table of results
+### Generate table of results
 
 ``` r
 # Define function to combine effect estimates and CIs into a single cell
@@ -2305,7 +2347,7 @@ kable(table_r, col.names = c("", "Total association", "Adjusted association", "G
 table_r_alspac <- table_r
 ```
 
-### ALSPAC - Plot internalising and externalising results for hyp2a
+## ALSPAC - Plot internalising and externalising results for hypothesis 2a
 
 ``` r
 # Subset dataframe to only necessary results: ACE, outcome, adjusted estimate, genetic confounding estimate, proportion confounded
@@ -2388,7 +2430,7 @@ alsp_ext_hyp2a <- ggplot(externalising, aes(x = ACE, y = Value, fill = Type, lab
   annotate("text", x=5, y=0.005, label= "0%") #manually add label for parental criminality as was negative but not sig. diff to 0
 ```
 
-### ALSPAC - Repeat analysis for negative control polygenic scores
+## ALSPAC - Estimate proportion of association between ACEs & mental health problems explained by negative control PGSs
 
 ``` r
 # Specify lavaan model
@@ -2466,7 +2508,7 @@ ACE <- c("maltreatment", "domestic_violence", "par_psych", "par_substance", "par
 nc_int <- data.frame(ACE, est, se)
 ```
 
-### ALSPAC - Aggregate results for proportions of associations with internalising problems explained by negative control polygenic scores
+### Aggregate results for proportions of associations with internalising problems explained by negative control polygenic scores
 
 ``` r
 nc_int$var <- nc_int$se^2 # get variance
@@ -2486,7 +2528,7 @@ round((c(est_model, lowci_model, upci_model)),4)*100
 2*pnorm(-abs(agg_2a_nc$es/sqrt(agg_2a_nc$var)))  # p=0.91
 ```
 
-### ALSPAC - Run models for negative controls and externalising problems
+### Run models for negative controls and externalising problems
 
 ``` r
 ### Maltreatment
@@ -2536,7 +2578,7 @@ ACE <- c("maltreatment", "domestic_violence", "par_psych", "par_substance", "par
 nc_ext <- data.frame(ACE, est, se)
 ```
 
-### ALSPAC - Aggregate results for proportions of associations with externalising problems explained by negative control polygenic scores
+### Aggregate results for proportions of associations with externalising problems explained by negative control polygenic scores
 
 ``` r
 nc_ext$var <- nc_ext$se^2 # get variance
@@ -2556,9 +2598,8 @@ round((c(est_model, lowci_model, upci_model)),4)*100
 2*pnorm(-abs(est_model/se_model)) 
 ```
 
-## Remove models saved for ALSPAC data
-
 ``` r
+## Remove models saved for ALSPAC data
 rm(fit_int_maltreatment, fit_int_dom_violence, fit_int_par_psych, fit_int_par_substance, fit_int_par_crim, fit_int_par_sep,
    fit_ext_maltreatment, fit_ext_dom_violence, fit_ext_par_psych, fit_ext_par_substance, fit_ext_par_crim, fit_ext_par_sep,
    nc_int_maltreatment, nc_int_dom_violence, nc_int_par_psych, nc_int_par_substance, nc_int_par_crim, nc_int_par_sep,
@@ -2567,7 +2608,9 @@ rm(fit_int_maltreatment, fit_int_dom_violence, fit_int_par_psych, fit_int_par_su
    est, est_model, internalising, int_ext, se, se_model, upci_model, var_model, agg_2a_nc, agg_21, adjusted)
 ```
 
-## ABCD - Run models for internalising problems
+## ABCD - Estimate proportion of association between ACEs & internalising problems explained by PGSs
+
+### Run models for internalising problems
 
 ``` r
 # Specify that MH = internalising problems, with sex regressed out
@@ -2607,9 +2650,10 @@ fit_int_par_sep <- runMI(multi_PGS_model_abcd, data=a.out_abcd$imputations, fun=
 summary(fit_int_par_sep)
 ```
 
-## Define function to extract results (edit function for maltreatment and parental criminality as used ordered=ACE)
+### Define function to extract results
 
 ``` r
+# Note: need to edit function based on ALSPAC data as here models for maltreatment and parental criminality used ordered=ACE
 extract_res <- function(fit_maltreatment, 
                         fit_dom_violence,
                         fit_par_psych,
@@ -2645,7 +2689,7 @@ extract_res <- function(fit_maltreatment,
 }
 ```
 
-## ABCD - Extract results for internalising problems into a dataframe
+### Extract results for internalising problems into a dataframe
 
 ``` r
 ## Extract results (estimate, low CI, upper CI [plus SE for proportions])
@@ -2668,7 +2712,7 @@ int_abcd <- subset(int_abcd, select = -c(ACE.1, ACE.2, ACE.3)) # drop extra ACE 
 int_abcd
 ```
 
-### ABCD - Get correlation between ACEs for aggregate model
+### Get correlation between ACEs for aggregate model
 
 ``` r
 library(tidyverse)
@@ -2692,7 +2736,7 @@ mean_ace_cor_abcd <- mean(ace_cor_nodiag_abcd, na.rm=TRUE) # r=0.31
 mean_ace_cor_abcd
 ```
 
-## ABCD - Aggregate results for proportions explained by polygenic scores
+### Aggregate results for proportions explained by polygenic scores
 
 ``` r
 int_abcd$var <- ((int_abcd$prop_up_ci - int_abcd$prop_low_ci)/3.92)^2 # get variance
@@ -2716,7 +2760,9 @@ round((c(est_model, lowci_model, upci_model)),4)*100
 hyp2a_int_abcd <- int_abcd
 ```
 
-## ABCD - Run models for externalising problems
+## ABCD - Estimate proportion of association between ACEs & externalising problems explained by PGSs
+
+### Run models for externalising problems
 
 ``` r
 ## Maltreatment
@@ -2753,7 +2799,7 @@ fit_ext_par_sep <- runMI(multi_PGS_model_abcd, data=a.out_abcd$imputations, fun=
 summary(fit_ext_par_sep)
 ```
 
-## ABCD - Extract results for externalising problems into a dataframe
+### Extract results for externalising problems into a dataframe
 
 ``` r
 ## Extract results (estimate, low CI, upper CI [plus SE for proportions])
@@ -2775,7 +2821,7 @@ ext_abcd <- subset(ext_abcd, select = -c(ACE.1, ACE.2, ACE.3)) # drop extra ACE 
 ext_abcd
 ```
 
-## ABCD -Aggregate results for proportions explained by polygenic scores
+### Aggregate results for proportions explained by polygenic scores
 
 ``` r
 ext_abcd$var <- ((ext_abcd$prop_up_ci - ext_abcd$prop_low_ci)/3.92)^2 # get variance
@@ -2796,7 +2842,7 @@ round((c(est_model, lowci_model, upci_model)),4)*100
 hyp2a_ext_abcd <- ext_abcd
 ```
 
-### ABCD - Plot internalising and externalising results for hyp2a
+### ABCD - Plot internalising and externalising results for hypothesis 2a
 
 ``` r
 # Combine internalising and externalising into one dataframe
@@ -2926,153 +2972,7 @@ abcd_ext_hyp2a <- ggplot(externalising, aes(x = ACE, y = Value, fill = Type, lab
   geom_text(size = 4, position = position_dodge(width = 0), vjust = -0.5)
 ```
 
-### ABCD - Run models for negative controls and internalising problems
-
-``` r
-### Maltreatment
-a.out_abcd <- transform(a.out_abcd, MH = scale(cbcl_internalising),
-                   cataracts_PGS_r = scale(cataracts_PGS_r),
-                   handedness_PGS_r = scale(handedness_PGS_r),
-                   ACE_1 = maltreatment_r) 
-nc_int_maltreatment <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
-summary(nc_int_maltreatment)
-
-### Domestic violence
-a.out_abcd <- transform(a.out_abcd, ACE_1 = domestic_violence)
-nc_int_dom_violence <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
-summary(nc_int_dom_violence)
-
-### Parental substance abuse
-a.out_abcd <- transform(a.out_abcd, ACE_1 = parental_substance)
-nc_int_par_substance <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
-summary(nc_int_par_substance)
-
-### Parental psychopathology
-a.out_abcd <- transform(a.out_abcd, ACE_1 = parental_psychopathology)
-nc_int_par_psych <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
-summary(nc_int_par_psych)
-
-### Parental criminality
-a.out_abcd <- transform(a.out_abcd, ACE_1 = parental_criminality)
-nc_int_par_crim <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan", ordered="ACE_1")
-# note: specify ordered=ACE_1 to avoid convergence problems
-summary(nc_int_par_crim)
-
-### Parental separation
-a.out_abcd <- transform(a.out_abcd, ACE_1 = parental_separation)
-nc_int_par_sep <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
-summary(nc_int_par_sep)
-
-##### Pool results for externalising problems
-est <- c(summary(nc_int_maltreatment)[12, 5], 
-                 summary(nc_int_dom_violence)[12, 5], 
-                 summary(nc_int_par_substance)[12, 5],
-                 summary(nc_int_par_psych)[12, 5],
-                 summary(nc_int_par_crim)[12, 5],
-                 summary(nc_int_par_sep)[12, 5])
-se <- c(summary(nc_int_maltreatment)[12, 6], 
-          summary(nc_int_dom_violence)[12, 6], 
-          summary(nc_int_par_substance)[12, 6],
-          summary(nc_int_par_psych)[12, 6],
-          summary(nc_int_par_crim)[12, 6],
-          summary(nc_int_par_sep)[12, 6])
-ACE <- c("maltreatment", "domestic_violence", "par_psych", "par_substance", "par_criminal", "par_sep")
-nc_int <- data.frame(ACE, est, se)
-```
-
-### ABCD - Aggregate results for proportions of associations with internalising problems explained by negative control polygenic scores
-
-``` r
-nc_int$var <- nc_int$se^2 # get variance
-nc_int$ni <- nrow(a.out_abcd$imputations$imp1) # sample size
-nc_int$id <- 1
-
-## Aggregate effect sizes 
-agg_2a_nc <- agg(id=id, es=est, var=var, method = "BHHR", cor = mean_ace_cor_abcd, mod=NULL, data=nc_int) 
-
-## Extract p-value and other estimates
-est_model <- agg_2a_nc$es
-var_model <- agg_2a_nc$var
-se_model <- sqrt(agg_2a_nc$var)
-lowci_model <- est_model - 1.96*se_model
-upci_model <- est_model + 1.96*se_model
-round((c(est_model, lowci_model, upci_model)),4)*100
-se_nc <- (upci_model-lowci_model)/3.92
-2*pnorm(-abs(est_model/se_nc) )
-```
-
-### ABCD - Run models for negative controls and externalising problems
-
-``` r
-### Maltreatment
-a.out_abcd <- transform(a.out_abcd, MH = scale(cbcl_externalising),
-                   ACE_1 = maltreatment_r) 
-nc_ext_maltreatment <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
-summary(nc_ext_maltreatment)
-
-### Domestic violence
-a.out_abcd <- transform(a.out_abcd, ACE_1 = domestic_violence)
-nc_ext_dom_violence <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
-summary(nc_ext_dom_violence)
-
-### Parental psychopathology
-a.out_abcd <- transform(a.out_abcd, ACE_1 = parental_psychopathology)
-nc_ext_par_psych <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
-summary(nc_ext_par_psych)
-
-### Parental substance abuse
-a.out_abcd <- transform(a.out_abcd, ACE_1 = parental_substance)
-nc_ext_par_substance <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
-summary(nc_ext_par_substance)
-
-### Parental criminality
-a.out_abcd <- transform(a.out_abcd, ACE_1 = parental_criminality)
-nc_ext_par_crim <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
-summary(nc_ext_par_crim)
-
-### Parental separation
-a.out_abcd <- transform(a.out_abcd, ACE_1 = parental_separation)
-nc_ext_par_sep <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
-summary(nc_ext_par_sep)
-
-# Extract results
-est <- c(summary(nc_ext_maltreatment)[12, 5], 
-         summary(nc_ext_dom_violence)[12, 5], 
-         summary(nc_ext_par_substance)[12, 5],
-         summary(nc_ext_par_psych)[12, 5],
-         summary(nc_ext_par_crim)[12, 5],
-         summary(nc_ext_par_sep)[12, 5])
-se <- c(summary(nc_ext_maltreatment)[12, 6], 
-        summary(nc_ext_dom_violence)[12, 6], 
-        summary(nc_ext_par_substance)[12, 6],
-        summary(nc_ext_par_psych)[12, 6],
-        summary(nc_ext_par_crim)[12, 6],
-        summary(nc_ext_par_sep)[12, 6])
-ACE <- c("maltreatment", "domestic_violence", "par_psych", "par_substance", "par_criminal", "par_sep")
-nc_ext <- data.frame(ACE, est, se)
-```
-
-### ABCD - Aggregate results for proportions of associations with externalising problems explained by negative control polygenic scores
-
-``` r
-nc_ext$var <- nc_ext$se^2 # get variance
-nc_ext$ni <- nrow(a.out_abcd$imputations$imp1) # sample size
-nc_ext$id <- 1
-
-agg_2a_nc <- agg(id=id, es=est, var=var, method = "BHHR", cor = mean_ace_cor_abcd, data=nc_ext) 
-
-## Extract p-value and other estimates
-est_model <- agg_2a_nc$es
-var_model <- agg_2a_nc$var
-se_model <- sqrt(agg_2a_nc$var)
-lowci_model <- est_model - 1.96*se_model
-upci_model <- est_model + 1.96*se_model
-round((c(est_model, lowci_model, upci_model)),4)*100
-se_nc <- (upci_model-lowci_model)/3.92
-2*pnorm(-abs(est_model/se_nc) )
-```
-
-## ABCD - Generate table of results
+### Generate table of results
 
 ``` r
 # Bind dataframes with results for internalising and externalising problems
@@ -3166,6 +3066,154 @@ kable(table_r_abcd, col.names = c("", "Total association", "Adjusted association
   kable_styling(font_size = 13) %>%
   pack_rows("Internalising problems", 1, 6, label_row_css = "color:black") %>%
   pack_rows("Externalising problems", 7, 12, label_row_css = "color:black")
+```
+
+## ABCD - Estimate proportion of association between ACEs & mental health problems explained by negative control PGSs
+
+### Run models for negative controls and internalising problems
+
+``` r
+### Maltreatment
+a.out_abcd <- transform(a.out_abcd, MH = scale(cbcl_internalising),
+                   cataracts_PGS_r = scale(cataracts_PGS_r),
+                   handedness_PGS_r = scale(handedness_PGS_r),
+                   ACE_1 = maltreatment_r) 
+nc_int_maltreatment <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
+summary(nc_int_maltreatment)
+
+### Domestic violence
+a.out_abcd <- transform(a.out_abcd, ACE_1 = domestic_violence)
+nc_int_dom_violence <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
+summary(nc_int_dom_violence)
+
+### Parental substance abuse
+a.out_abcd <- transform(a.out_abcd, ACE_1 = parental_substance)
+nc_int_par_substance <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
+summary(nc_int_par_substance)
+
+### Parental psychopathology
+a.out_abcd <- transform(a.out_abcd, ACE_1 = parental_psychopathology)
+nc_int_par_psych <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
+summary(nc_int_par_psych)
+
+### Parental criminality
+a.out_abcd <- transform(a.out_abcd, ACE_1 = parental_criminality)
+nc_int_par_crim <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan", ordered="ACE_1")
+# note: specify ordered=ACE_1 to avoid convergence problems
+summary(nc_int_par_crim)
+
+### Parental separation
+a.out_abcd <- transform(a.out_abcd, ACE_1 = parental_separation)
+nc_int_par_sep <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
+summary(nc_int_par_sep)
+
+##### Pool results for externalising problems
+est <- c(summary(nc_int_maltreatment)[12, 5], 
+                 summary(nc_int_dom_violence)[12, 5], 
+                 summary(nc_int_par_substance)[12, 5],
+                 summary(nc_int_par_psych)[12, 5],
+                 summary(nc_int_par_crim)[12, 5],
+                 summary(nc_int_par_sep)[12, 5])
+se <- c(summary(nc_int_maltreatment)[12, 6], 
+          summary(nc_int_dom_violence)[12, 6], 
+          summary(nc_int_par_substance)[12, 6],
+          summary(nc_int_par_psych)[12, 6],
+          summary(nc_int_par_crim)[12, 6],
+          summary(nc_int_par_sep)[12, 6])
+ACE <- c("maltreatment", "domestic_violence", "par_psych", "par_substance", "par_criminal", "par_sep")
+nc_int <- data.frame(ACE, est, se)
+```
+
+### Aggregate results for proportions of associations with internalising problems explained by negative control polygenic scores
+
+``` r
+nc_int$var <- nc_int$se^2 # get variance
+nc_int$ni <- nrow(a.out_abcd$imputations$imp1) # sample size
+nc_int$id <- 1
+
+## Aggregate effect sizes 
+agg_2a_nc <- agg(id=id, es=est, var=var, method = "BHHR", cor = mean_ace_cor_abcd, mod=NULL, data=nc_int) 
+
+## Extract p-value and other estimates
+est_model <- agg_2a_nc$es
+var_model <- agg_2a_nc$var
+se_model <- sqrt(agg_2a_nc$var)
+lowci_model <- est_model - 1.96*se_model
+upci_model <- est_model + 1.96*se_model
+round((c(est_model, lowci_model, upci_model)),4)*100
+se_nc <- (upci_model-lowci_model)/3.92
+2*pnorm(-abs(est_model/se_nc) )
+```
+
+### Run models for negative controls and externalising problems
+
+``` r
+### Maltreatment
+a.out_abcd <- transform(a.out_abcd, MH = scale(cbcl_externalising),
+                   ACE_1 = maltreatment_r) 
+nc_ext_maltreatment <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
+summary(nc_ext_maltreatment)
+
+### Domestic violence
+a.out_abcd <- transform(a.out_abcd, ACE_1 = domestic_violence)
+nc_ext_dom_violence <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
+summary(nc_ext_dom_violence)
+
+### Parental psychopathology
+a.out_abcd <- transform(a.out_abcd, ACE_1 = parental_psychopathology)
+nc_ext_par_psych <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
+summary(nc_ext_par_psych)
+
+### Parental substance abuse
+a.out_abcd <- transform(a.out_abcd, ACE_1 = parental_substance)
+nc_ext_par_substance <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
+summary(nc_ext_par_substance)
+
+### Parental criminality
+a.out_abcd <- transform(a.out_abcd, ACE_1 = parental_criminality)
+nc_ext_par_crim <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
+summary(nc_ext_par_crim)
+
+### Parental separation
+a.out_abcd <- transform(a.out_abcd, ACE_1 = parental_separation)
+nc_ext_par_sep <- runMI(NC_PGS_model, data=a.out_abcd$imputations, fun="lavaan")
+summary(nc_ext_par_sep)
+
+# Extract results
+est <- c(summary(nc_ext_maltreatment)[12, 5], 
+         summary(nc_ext_dom_violence)[12, 5], 
+         summary(nc_ext_par_substance)[12, 5],
+         summary(nc_ext_par_psych)[12, 5],
+         summary(nc_ext_par_crim)[12, 5],
+         summary(nc_ext_par_sep)[12, 5])
+se <- c(summary(nc_ext_maltreatment)[12, 6], 
+        summary(nc_ext_dom_violence)[12, 6], 
+        summary(nc_ext_par_substance)[12, 6],
+        summary(nc_ext_par_psych)[12, 6],
+        summary(nc_ext_par_crim)[12, 6],
+        summary(nc_ext_par_sep)[12, 6])
+ACE <- c("maltreatment", "domestic_violence", "par_psych", "par_substance", "par_criminal", "par_sep")
+nc_ext <- data.frame(ACE, est, se)
+```
+
+### Aggregate results for proportions of associations with externalising problems explained by negative control polygenic scores
+
+``` r
+nc_ext$var <- nc_ext$se^2 # get variance
+nc_ext$ni <- nrow(a.out_abcd$imputations$imp1) # sample size
+nc_ext$id <- 1
+
+agg_2a_nc <- agg(id=id, es=est, var=var, method = "BHHR", cor = mean_ace_cor_abcd, data=nc_ext) 
+
+## Extract p-value and other estimates
+est_model <- agg_2a_nc$es
+var_model <- agg_2a_nc$var
+se_model <- sqrt(agg_2a_nc$var)
+lowci_model <- est_model - 1.96*se_model
+upci_model <- est_model + 1.96*se_model
+round((c(est_model, lowci_model, upci_model)),4)*100
+se_nc <- (upci_model-lowci_model)/3.92
+2*pnorm(-abs(est_model/se_nc) )
 ```
 
 ## Make table with ALSPAC and ABCD results for hypothesis 2a
@@ -3264,7 +3312,9 @@ agg_res <- function(data, corr_aces, N) {
 }
 ```
 
-## ALSPAC - Step 1. Obtain correlation between the ACE and the mental health outcome (c path)
+## ALSPAC - Estimate proportion of association between ACEs & mental health problems explained by latent PGSs (Gsens)
+
+### Step 1. Obtain correlation between the ACE and the mental health outcome (c path)
 
 ``` r
 # To run Gsens, need to obtain 3 sets of correlations:
@@ -3372,7 +3422,7 @@ ace_mh_alspac
 rm(r2_mal, r2_domvi, r2_parpsych, r2_parsub,  r2_parcrim, r2_parsep, r2_ext.df, r2_int.df) # remove r2 objects
 ```
 
-## ALSPAC - Step 2. Obtain correlation between observed polygenic scores for mental health problems and the ACE (a path)
+### Step 2. Obtain correlation between observed polygenic scores for mental health problems and the ACE (a path)
 
 ``` r
 # To get the correlation between observed polygenic scores for mental health problems and ACEs, take 2 steps:
@@ -3432,7 +3482,7 @@ pgs_ace_alspac$r <- sqrt(pgs_ace_alspac$pgs_r2)
 pgs_ace_alspac
 ```
 
-## ALSPAC - Step 3. Obtain correlation between observed polygenic scores and the mental health outcome (b path)
+### Step 3. Obtain correlation between observed polygenic scores and the mental health outcome (b path)
 
 ``` r
 # To get the correlation between observed polygenic scores for mental health problems and mental health, take 2 steps:
@@ -3469,7 +3519,7 @@ pgs_mh_alspac$r <- sqrt(pgs_mh_alspac$mh_pgs_r2)
 pgs_mh_alspac
 ```
 
-## ALSPAC - Run Gsens for internalising problems
+### Run Gsens for internalising problems
 
 ``` r
 # Maltreatment 
@@ -3533,7 +3583,7 @@ gsens_int_par_sep <-
     constrain = 'bgx*bgy < bgx*bgy+bxy') 
 ```
 
-## ALSPAC - Run Gsens for externalising problems
+### Run Gsens for externalising problems
 
 ``` r
 # Maltreatment:
@@ -3597,7 +3647,7 @@ gsens_ext_par_sep <-
     constrain = 'bgx*bgy < bgx*bgy+bxy') 
 ```
 
-## ALSPAC - Pool gsens results using all PGSs and format for table/plot
+### Pool gsens results using all PGSs and format for table/plot
 
 ``` r
 ## Internalising problems
@@ -3653,7 +3703,7 @@ gsens_alspac$ACE <- as.character(aces_labels[gsens_alspac$ACE])
 gsens_alspac
 ```
 
-## ALSPAC - Plot Gsens results
+### Plot Gsens results
 
 ``` r
 # Convert dataframe to long ahead of plotting
@@ -3728,7 +3778,7 @@ alsp_ext_hyp2b <- ggplot(gsens_plot[outcome=="externalising"],
   geom_text(size = 4, position = position_stack(vjust = 0.5)) 
 ```
 
-## Arrange ALSPAC plots for hypotheses 2a and 2b
+### Arrange ALSPAC plots for hypotheses 2a and 2b
 
 ``` r
 ## Arrange plots (save - 9x15 pdf, 1400x700 eps)
@@ -3746,7 +3796,7 @@ dev.off()
 ggsave(plot, file="Hyp2a_barplot.eps", width = 9, height = 15, units=c("in"))   
 ```
 
-## ALSPAC - Make table showing correlations between PGSs and outcomes
+### Make table showing correlations between PGSs and outcomes
 
 ``` r
 pgs_mh_alspac
@@ -3760,7 +3810,7 @@ pgs_ace_mh_alspac$pgs_r2 <- round(pgs_ace_mh_alspac$pgs_r2 ,3)
 pgs_ace_mh_alspac$r <- round(pgs_ace_mh_alspac$r ,3)
 ```
 
-## ABCD - Repeat Gsens analyses in ABCD
+## ABCD - Estimate proportion of association between ACEs & mental health problems explained by latent PGSs (Gsens)
 
 ``` r
 # Remove objects and results derived in ALSPAC
@@ -3773,7 +3823,7 @@ rm(fit, r2_mal, r2_domvi, r2_parcrim, r2_parpsych, r2_parsep, r2_parsub, r2_int,
    gsens_ext_par_crim, gsens_ext_par_sep)
 ```
 
-## ABCD - Step 1. Obtain correlation between the ACE and the mental health outcome
+### Step 1. Obtain correlation between the ACE and the mental health outcome
 
 ``` r
 # To get the correlation between the ACE and mental health outcome, take 2 steps:
@@ -3877,7 +3927,7 @@ ace_mh_abcd$r <- sqrt(ace_mh_abcd$r2) # calculate r from r2
 ace_mh_abcd
 ```
 
-## ABCD - Step 2. Obtain correlation between observed polygenic scores for mental health problems and the ACE (a path)
+### Step 2. Obtain correlation between observed polygenic scores for mental health problems and the ACE (a path)
 
 ``` r
 # To get the correlation between observed polygenic scores for mental health problems and ACEs, take 2 steps:
@@ -3939,7 +3989,7 @@ pgs_ace_abcd
 rm(r2_mal, r2_domvi, r2_parpsych, r2_parsub,  r2_parcrim, r2_parsep) # remove r2 objects
 ```
 
-## ABCD - Step 3. Obtain correlation between observed polygenic scores and the mental health outcome (b path)
+### Step 3. Obtain correlation between observed polygenic scores and the mental health outcome (b path)
 
 ``` r
 # To get the correlation between observed polygenic scores for mental health problems and mental health, take 2 steps:
@@ -3977,7 +4027,7 @@ pgs_mh_abcd$r <- sqrt(pgs_mh_abcd$mh_pgs_r2)
 pgs_mh_abcd
 ```
 
-## ABCD - Run Gsens for internalising problems
+### Run Gsens for internalising problems
 
 ``` r
 # Maltreatment: 51% 
@@ -4041,7 +4091,7 @@ gsens_int_par_sep <-
     constrain = 'bgx*bgy < bgx*bgy+bxy') 
 ```
 
-## ABCD - Run Gsens for externalising problems
+### Run Gsens for externalising problems
 
 ``` r
 # Maltreatment: 39.9% 
@@ -4105,7 +4155,7 @@ gsens_ext_par_sep <-
     constrain = 'bgx*bgy < bgx*bgy+bxy') 
 ```
 
-## ABCD - Pool gsens results and format for table/plot
+### Pool gsens results and format for table/plot
 
 ``` r
 ## Internalising problems
@@ -4156,7 +4206,7 @@ aces_labels <- c(maltreatment="Maltreatment", domestic_violence="Domestic violen
 gsens_abcd$ACE <- as.character(aces_labels[gsens_abcd$ACE])
 ```
 
-## ABCD - Plot Gsens results
+### Plot Gsens results
 
 ``` r
 # Convert dataframe to long ahead of plotting
@@ -4231,7 +4281,7 @@ abcd_ext_hyp2b <- ggplot(gsens_plot[outcome=="externalising"],
   geom_text(size = 4, position = position_stack(vjust = 0.5)) 
 ```
 
-## Arrange ABCD plots for hypotheses 2a and 2b
+### Arrange ABCD plots for hypotheses 2a and 2b
 
 ``` r
 ## Arrange plots (save - 9x15 pdf, 1400x700 eps)
@@ -4248,7 +4298,7 @@ plot
 dev.off()
 ```
 
-## ABCD - Make table showing correlations between PGSs and outcomes
+### Make table showing correlations between PGSs and outcomes
 
 ``` r
 pgs_ace_abcd
