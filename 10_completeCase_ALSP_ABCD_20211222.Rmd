@@ -1,0 +1,3374 @@
+---
+title: "Main analysis on complete case data - ALSPAC & ABCD"
+author: "Jessie Baldwin"
+output: 
+  github_document:
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval=FALSE)
+```
+
+# Load packages
+```{r}
+library(metafor)
+library(kableExtra)
+library(lavaan)
+library(Hmisc)
+library(stringr)
+library(polycor)
+```
+
+```{r,echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+## Define paths for working directories
+Tables <- "~/Dropbox/Wellcome fellowship/Registered Report/Results/Tables"
+Figures <- "~/Dropbox/Wellcome fellowship/Registered Report/Results/Figures"
+Data <- "~/Desktop"
+```
+
+# Load imputed data and create variables
+```{r}
+## ==================================================================
+## ====================== ALSPAC ====================================
+## ==================================================================
+setwd(Data)
+# ALSPAC
+alspac_CC <- readRDS("ALSPACcompleteCases_20220204.rds") 
+
+dim(alspac_CC) # this dataset includes everyone with genetic data (larger N than complete case sample)
+colnames(alspac_CC)
+
+## ================== Derive maltreatment variable ====================================
+# code exposed if any exposure to physical abuse, sexual abuse, emotional abuse, or emotional neglect
+alspac_CC$maltreatment_0_9.5yrs <- "FALSE"
+alspac_CC$maltreatment_0_9.5yrs[alspac_CC$physical_abuse_0_9.5yrs == "TRUE" | 
+                                  alspac_CC$sexual_abuse_0_9.5yrs == "TRUE" |
+                                  alspac_CC$emotional_abuse_0_9.5yrs == "TRUE" |
+                                  alspac_CC$emotional_neglect_0_9.5yrs == "TRUE"] <- "TRUE"
+alspac_CC$maltreatment_0_9.5yrs[apply(apply(alspac_CC[,c("physical_abuse_0_9.5yrs", 
+                                                         "sexual_abuse_0_9.5yrs",
+                                                         "emotional_abuse_0_9.5yrs",
+                                                         "emotional_neglect_0_9.5yrs")],2,is.na),1,sum) >2] = NA
+alspac_CC$maltreatment_0_9.5yrs <- as.factor(alspac_CC$maltreatment_0_9.5yrs)
+table(alspac_CC$maltreatment_0_9.5yrs, useNA="always")
+
+## ================== Derive complete case sample ====================================
+alspac_CC <- subset(alspac_CC, !is.na(maltreatment_0_9.5yrs) & 
+                      !is.na(violence_between_parents_0_9.5yrs) & 
+                      !is.na(mental_health_problems_or_suicide_0_9.5yrs) & 
+                      !is.na(substance_household_0_9.5yrs) & 
+                      !is.na(parent_convicted_offence_0_9.5yrs) & 
+                      !is.na(parental_separation_0_9.5yrs)& 
+                      !is.na(internalising10) & 
+                      !is.na(externalising10) &
+                      !is.na(ADHD_PGS_r) &
+                      !is.na(alcohol_PGS_r) &
+                      !is.na(antisocial_PGS_r) &
+                      !is.na(anxiety_PGS_r) &
+                      !is.na(autism_PGS_r) &
+                      !is.na(bipolar_PGS_r) &
+                      !is.na(depression_PGS_r) &
+                      !is.na(schizophrenia_PGS_r) &
+                      !is.na(handedness_PGS_r) &
+                      !is.na(cataracts_PGS_r))
+dim(alspac_CC) # 4106 had complete data on ACEs, internalising and externalising problems, and polygenic scores
+
+## ================== Standardise polygenic scores ====================================
+# ALSPAC
+alspac_CC$ADHD_PGS_r <- scale(alspac_CC$ADHD_PGS_r)
+alspac_CC$alcohol_PGS_r <- scale(alspac_CC$alcohol_PGS_r)
+alspac_CC$antisocial_PGS_r <- scale(alspac_CC$antisocial_PGS_r)
+alspac_CC$anxiety_PGS_r <- scale(alspac_CC$anxiety_PGS_r)
+alspac_CC$autism_PGS_r <- scale(alspac_CC$autism_PGS_r)
+alspac_CC$bipolar_PGS_r <- scale(alspac_CC$bipolar_PGS_r)
+alspac_CC$bipolar_2019_PGS_r <- scale(alspac_CC$bipolar2019_PGS_r)
+alspac_CC$depression_PGS_r <- scale(alspac_CC$depression_PGS_r)
+alspac_CC$schizophrenia_PGS_r <- scale(alspac_CC$schizophrenia_PGS_r)
+alspac_CC$handedness_PGS_r <- scale(alspac_CC$handedness_PGS_r)
+alspac_CC$cataracts_PGS_r <- scale(alspac_CC$cataracts_PGS_r)
+
+## ==================================================================
+## ======================== ABCD ====================================
+## ==================================================================
+# Load data
+abcd_CC <- readRDS("abcd_completeCases_20211216.rds")
+dim(abcd_CC) # 4662 have complete data on genotype, ACEs, and internalising/externalising problems
+
+# Standardise polygenic scores
+abcd_CC$ADHD_PGS_r <- scale(abcd_CC$ADHD_PGS_r)
+abcd_CC$alcohol_PGS_r <- scale(abcd_CC$alcohol_PGS_r)
+abcd_CC$antisocial_PGS_r <- scale(abcd_CC$antisocial_PGS_r)
+abcd_CC$anxiety_PGS_r <- scale(abcd_CC$anxiety_PGS_r)
+abcd_CC$autism_PGS_r <- scale(abcd_CC$autism_PGS_r)
+abcd_CC$bipolar_PGS_r <- scale(abcd_CC$bipolar_PGS_r)
+abcd_CC$depression_PGS_r <- scale(abcd_CC$depression_PGS_r)
+abcd_CC$schizophrenia_PGS_r <- scale(abcd_CC$schizophrenia_PGS_r)
+abcd_CC$handedness_PGS_r <- scale(abcd_CC$handedness_PGS_r)
+abcd_CC$cataracts_PGS_r <- scale(abcd_CC$cataracts_PGS_r)
+```
+
+# Hypothesis 1A
+
+## Association between PGSs for psychopathology and ACEs
+
+### Define function to run regression models
+```{r}
+reg_hyp1a <- function(ace_var, sex, adhd, alcohol, antisocial, anxiety, autism, bipolar, depression, schizophrenia, data) {
+  
+  # Run regressions predicting the ACE from each polygenic score
+  adhd_reg <- glm(ace_var ~ adhd + sex, family = binomial(link="logit"), data)
+  alcohol_reg <- glm(ace_var ~ alcohol + sex, family = binomial(link="logit"), data)
+  antisocial_reg <- glm(ace_var ~ antisocial + sex, family = binomial(link="logit"), data)
+  anxiety_reg <- glm(ace_var ~ anxiety + sex, family = binomial(link="logit"), data)
+  autism_reg <- glm(ace_var ~ autism + sex, family = binomial(link="logit"), data)
+  bipolar_reg <- glm(ace_var ~ bipolar + sex, family = binomial(link="logit"), data)
+  depression_reg <- glm(ace_var ~ depression + sex, family = binomial(link="logit"), data)
+  schizophrenia_reg <- glm(ace_var ~ schizophrenia + sex, family = binomial(link="logit"), data)
+  
+  # Extract results
+  results <- c(
+    # adhd_reg OR and CIs
+    exp(coef(adhd_reg)[2]), summary(adhd_reg)$coefficients[2,2], summary(adhd_reg)$coefficients[2,4], 
+    # alcohol_reg OR and CIs
+    exp(coef(alcohol_reg)[2]), summary(alcohol_reg)$coefficients[2,2], summary(alcohol_reg)$coefficients[2,4], 
+    # antisocial_reg OR and CIs
+    exp(coef(antisocial_reg)[2]), summary(antisocial_reg)$coefficients[2,2], summary(antisocial_reg)$coefficients[2,4], 
+    # anxiety_reg OR and CIs
+    exp(coef(anxiety_reg)[2]), summary(anxiety_reg)$coefficients[2,2], summary(anxiety_reg)$coefficients[2,4],          
+    # autism_reg OR and CIs
+    exp(coef(autism_reg)[2]), summary(autism_reg)$coefficients[2,2], summary(autism_reg)$coefficients[2,4], 
+    # bipolar_reg OR and CIs
+    exp(coef(bipolar_reg)[2]), summary(bipolar_reg)$coefficients[2,2],summary(bipolar_reg)$coefficients[2,4], 
+    # depression_reg OR and CIs
+    exp(coef(depression_reg)[2]), summary(depression_reg)$coefficients[2,2],summary(depression_reg)$coefficients[2,4], 
+    # schizophrenia_reg OR and CIs
+    exp(coef(schizophrenia_reg)[2]), summary(schizophrenia_reg)$coefficients[2,2], summary(schizophrenia_reg)$coefficients[2,4])  
+  
+  # Return results in a matrix
+  return(matrix(results, nrow=1, ncol=24, dimnames=list(c(""), 
+                                                        c("ADHD_OR", "ADHD_SE", "ADHD_p",
+                                                          "alcohol_OR", "alcohol_SE", "alcohol_p",
+                                                          "antisocial_OR", "antisocial_SE", "antisocial_p",
+                                                          "anxiety_OR", "anxiety_SE", "anxiety_p",
+                                                          "autism_OR", "autism_SE", "autism_p",
+                                                          "bipolar_OR", "bipolar_SE", "bipolar_p",
+                                                          "depression_OR", "depression_SE", "depression_p",
+                                                          "schizophrenia_OR", "schizophrenia_SE", "schizophrenia_p"))))
+  
+}
+```
+
+### ALSPAC - Run regressions for associations between PGSs for psychopathology and ACEs
+```{r}
+maltreatment <- reg_hyp1a(alspac_CC$maltreatment_0_9.5yrs, alspac_CC$sex, 
+                     alspac_CC$ADHD_PGS_r, 
+                     alspac_CC$alcohol_PGS_r, 
+                     alspac_CC$antisocial_PGS_r, 
+                     alspac_CC$anxiety_PGS_r, 
+                     alspac_CC$autism_PGS_r, 
+                     alspac_CC$bipolar_PGS_r, 
+                     alspac_CC$depression_PGS_r, 
+                     alspac_CC$schizophrenia_PGS_r, alspac_CC) 
+dom_vi <- reg_hyp1a(alspac_CC$violence_between_parents_0_9.5yrs, alspac_CC$sex, 
+                    alspac_CC$ADHD_PGS_r, 
+                    alspac_CC$alcohol_PGS_r, 
+                    alspac_CC$antisocial_PGS_r, 
+                    alspac_CC$anxiety_PGS_r, 
+                    alspac_CC$autism_PGS_r, 
+                    alspac_CC$bipolar_PGS_r, 
+                    alspac_CC$depression_PGS_r, 
+                    alspac_CC$schizophrenia_PGS_r, alspac_CC) 
+par_psych <- reg_hyp1a(alspac_CC$mental_health_problems_or_suicide_0_9.5yrs, alspac_CC$sex, 
+                     alspac_CC$ADHD_PGS_r, 
+                     alspac_CC$alcohol_PGS_r, 
+                     alspac_CC$antisocial_PGS_r, 
+                     alspac_CC$anxiety_PGS_r, 
+                     alspac_CC$autism_PGS_r, 
+                     alspac_CC$bipolar_PGS_r, 
+                     alspac_CC$depression_PGS_r, 
+                     alspac_CC$schizophrenia_PGS_r, alspac_CC) 
+par_sub <- reg_hyp1a(alspac_CC$substance_household_0_9.5yrs, alspac_CC$sex, 
+                     alspac_CC$ADHD_PGS_r, 
+                     alspac_CC$alcohol_PGS_r, 
+                     alspac_CC$antisocial_PGS_r, 
+                     alspac_CC$anxiety_PGS_r, 
+                     alspac_CC$autism_PGS_r, 
+                     alspac_CC$bipolar_PGS_r, 
+                     alspac_CC$depression_PGS_r, 
+                     alspac_CC$schizophrenia_PGS_r, alspac_CC) 
+par_crim <- reg_hyp1a(alspac_CC$parent_convicted_offence_0_9.5yrs, alspac_CC$sex, 
+                     alspac_CC$ADHD_PGS_r, 
+                     alspac_CC$alcohol_PGS_r, 
+                     alspac_CC$antisocial_PGS_r, 
+                     alspac_CC$anxiety_PGS_r, 
+                     alspac_CC$autism_PGS_r, 
+                     alspac_CC$bipolar_PGS_r, 
+                     alspac_CC$depression_PGS_r, 
+                     alspac_CC$schizophrenia_PGS_r, alspac_CC) 
+par_sep <- reg_hyp1a(alspac_CC$parental_separation_0_9.5yrs, alspac_CC$sex, 
+                     alspac_CC$ADHD_PGS_r, 
+                     alspac_CC$alcohol_PGS_r, 
+                     alspac_CC$antisocial_PGS_r, 
+                     alspac_CC$anxiety_PGS_r, 
+                     alspac_CC$autism_PGS_r, 
+                     alspac_CC$bipolar_PGS_r, 
+                     alspac_CC$depression_PGS_r, 
+                     alspac_CC$schizophrenia_PGS_r, alspac_CC) 
+```
+
+### ALSPAC - Get correlation between ACEs for aggregate model 
+```{r}
+# Get correlation between ACE variables
+ace_cor_alspac <- hetcor(alspac_CC[,c("maltreatment_0_9.5yrs", 
+                                     "violence_between_parents_0_9.5yrs", 
+                                     "mental_health_problems_or_suicide_0_9.5yrs", 
+                                     "substance_household_0_9.5yrs", 
+                                     "parent_convicted_offence_0_9.5yrs", 
+                                     "parental_separation_0_9.5yrs")])$correlations
+
+# Get the mean ACE correlation excluding the diagonal
+ace_cor_alspac_nodiag <- ace_cor_alspac
+diag(ace_cor_alspac_nodiag) <- NA
+mean_ace_cor_alspac <- mean(ace_cor_alspac_nodiag, na.rm=TRUE)
+mean_ace_cor_alspac
+```
+
+### ALSPAC - Prepare to run aggregate model 
+```{r}
+# Bind all results from regression models into one dataframe
+results <- as.data.frame(do.call("rbind", list(maltreatment, dom_vi, 
+                                               par_psych, par_sub, par_crim, par_sep)))
+# Add ACE variable specifying which ACE is the outcome
+results$ace <- c("maltreatment", "domestic_violence", "par_psych", "par_substance", "par_criminal", "par_sep")
+
+# Make dataframe long
+long_results <- reshape(results, varying=names(results)[1:24],
+                        direction="long", idvar="ace",
+                        timevar = "PGS", 
+                        times=c("ADHD", 
+                                "alcohol", 
+                                "antisocial", "anxiety", "autism",
+                                "bipolar", "depression", "schizophrenia"),
+                         v.names=c("OR", "SE", "p"),
+                        sep="_")
+# SE and p are mixed up: re-order
+library(data.table)
+setnames(long_results, old = c('SE','p'), new = c('p','SE'))
+
+library(MAd)
+# Prepare dataframe for aggregate meta-analysis
+long_results$var <- long_results$SE^2
+long_results$log_OR <- log(long_results$OR)
+long_results$id <- 1
+```
+
+### ALSPAC - Run aggregate meta-analysis
+```{r}
+aggregate <- agg(id, log_OR, var, cor=mean_ace_cor_alspac, method = "BHHR", mod=NULL, data=long_results)
+se <- sqrt(aggregate$var)
+
+# Odds ratio
+round(exp(aggregate$es),2)
+# Low 95% CI
+round(exp(aggregate$es - 1.96*se),2)
+# Upper 95% CI
+round(exp(aggregate$es + 1.96*se),2)
+# Low 90% CI
+round(exp(aggregate$es - 1.645*se),2)
+# Upper 90% CI
+round(exp(aggregate$es + 1.645*se),2)
+# p value for a 2-sided test (see: https://www.bmj.com/content/343/bmj.d2304)
+z <- aggregate$es / se
+p <- exp(-0.717*z - 0.416*z^2)
+p 
+```
+
+### ALSPAC - Prepare to make forest plot for associations between PGSs for psychopathology and ACEs
+```{r}
+# Add FDR corrected pvalues
+long_results$p_fdr <- p.adjust(long_results$p, method="fdr")
+
+# Make columns with 95% CIs
+long_results$lowCI <- exp(long_results$log_OR - 1.96*long_results$SE)
+long_results$upCI <- exp(long_results$log_OR + 1.96*long_results$SE)
+
+# Add row to results dataframe with aggregated (pooled) effect size
+agg_row <- list(ace="Pooled effect size", PGS=" ", OR=exp(aggregate$es),  p=p, SE=sqrt(aggregate$var),
+           var=aggregate$var, log_OR=aggregate$es, id=1, p_fdr=p,
+           lowCI=exp(aggregate$es - 1.96*se),
+           upCI=exp(aggregate$es + 1.96*se))
+long_results <- rbind(long_results, agg_row, stringsAsFactors=FALSE)
+
+# Rename ACEs variable
+long_results$ace <- factor(long_results$ace, ordered=TRUE, 
+                              levels=c("maltreatment", "domestic_violence", "par_psych", "par_substance", "par_criminal", "par_sep", "Pooled effect size"))
+levels(long_results$ace)
+levels(long_results$ace) <- c("Maltreatment", "Domestic violence", "Parental mental illness",
+                              "Parental substance abuse", "Parental criminality", "Parental separation", "Pooled effect size")
+# Rename PGSs variable
+labels <- c(ADHD="ADHD", alcohol="Alcohol dependence", antisocial="Antisocial behaviour", 
+            anxiety="Anxiety", autism="Autism", bipolar="Bipolar disorder",
+            depression="Depression", schizophrenia="Schizophrenia")
+long_results$PGS <- as.character(labels[long_results$PGS])
+
+# Order dataframe according to ACE (with maltreatment first and parental separation last)
+long_results <- long_results[order(long_results$ace),]
+
+# Make separate dataframe containing polygenic score and p-values (this is to include in the forest plot)
+df_forest_ace <- data.frame(long_results$PGS, long_results$p_fdr)
+rownames(df_forest_ace) <- rownames(long_results)
+df_forest_ace$long_results.p_fdr <- format(round(df_forest_ace$long_results.p_fdr, 4), nsmall=4)
+
+# The forest plot will also include results for the associations between negative control polygenic scores and ACEs
+# Next: run regressions between negative control polygenic scores and ACEs
+```
+
+## ALSPAC - Association between negative control PGSs and ACEs
+
+### Define function to run regression models for negative controls
+```{r}
+reg_hyp1a_nc <- function(ace_var, sex, handedness, cataracts, data) {
+  
+  # Run regressions predicting the ACE from each polygenic score
+  handedness_reg <- glm(ace_var ~ handedness + sex, family = binomial(link="logit"), data)
+  cataracts_reg <- glm(ace_var ~ cataracts + sex, family = binomial(link="logit"), data)
+
+  # Extract results
+  results <- c(
+    # handedness results
+    exp(coef(handedness_reg)[2]), summary(handedness_reg)$coefficients[2,2], summary(handedness_reg)$coefficients[2,4], 
+    # cataracts results
+    exp(coef(cataracts_reg)[2]), summary(cataracts_reg)$coefficients[2,2], summary(cataracts_reg)$coefficients[2,4]) 
+  
+  # Return results in matrix
+    return(matrix(results, nrow=1, ncol=6, dimnames=list(c(""), 
+                                                        c("handedness_OR", "handedness_SE", "handedness_p",
+                                                          "cataracts_OR", "cataracts_SE", "cataracts_p"))))
+  
+}
+```
+
+### ALSPAC - Run regressions for associations between negative control PGSs and ACEs
+```{r}
+maltreatment <- reg_hyp1a_nc(alspac_CC$maltreatment_0_9.5yrs, alspac_CC$sex, 
+                     alspac_CC$handedness_PGS_r, alspac_CC$cataracts_PGS_r, alspac_CC) 
+dom_vi <- reg_hyp1a_nc(alspac_CC$violence_between_parents_0_9.5yrs, alspac_CC$sex, 
+                     alspac_CC$handedness_PGS_r, alspac_CC$cataracts_PGS_r, alspac_CC) 
+par_psych <- reg_hyp1a_nc(alspac_CC$mental_health_problems_or_suicide_0_9.5yrs, alspac_CC$sex, 
+                     alspac_CC$handedness_PGS_r, alspac_CC$cataracts_PGS_r, alspac_CC) 
+par_sub <- reg_hyp1a_nc(alspac_CC$substance_household_0_9.5yrs, alspac_CC$sex, 
+                     alspac_CC$handedness_PGS_r, alspac_CC$cataracts_PGS_r, alspac_CC) 
+par_crim <- reg_hyp1a_nc(alspac_CC$parent_convicted_offence_0_9.5yrs, alspac_CC$sex, 
+                         alspac_CC$handedness_PGS_r, alspac_CC$cataracts_PGS_r, alspac_CC) 
+par_sep <- reg_hyp1a_nc(alspac_CC$parental_separation_0_9.5yrs, alspac_CC$sex, 
+                     alspac_CC$handedness_PGS_r, alspac_CC$cataracts_PGS_r, alspac_CC) 
+```
+
+### ALSPAC - Prepare to run aggregate model for negative controls and ACEs
+```{r}
+# Bind all results into one dataframe
+neg_control_data <- as.data.frame(do.call("rbind", list(maltreatment, dom_vi, 
+                                               par_psych, par_sub, par_crim, par_sep)))
+# Add info on ACE outcome
+neg_control_data$ace <- c("maltreatment", "domestic_violence", "par_psych", "par_substance", "par_criminal", "par_sep")
+
+# Make dataframe long
+neg_control_data <- reshape(neg_control_data, varying=names(neg_control_data)[1:6],
+                        direction="long", idvar="ace",
+                        timevar = "PGS", 
+                        times=c("handedness", 
+                                "cataracts"),
+                         v.names=c("OR", "SE", "p"),
+                        sep="_")
+# SE and p are mixed up: re-order
+setnames(neg_control_data, old = c('SE','p'), new = c('p','SE'))
+
+# Prepare dataframe for aggregate meta-analysis
+neg_control_data$var <- neg_control_data$SE^2
+neg_control_data$log_OR <- log(neg_control_data$OR)
+neg_control_data$id <- 1
+```
+
+### ALSPAC - Run aggregate model for negative controls
+```{r}
+aggregate_nc <- agg(id, log_OR, var, cor=mean_ace_cor_alspac, method = "BHHR", mod=NULL, data=neg_control_data)
+neg_control_se <- sqrt(aggregate_nc$var)
+
+# Aggregated effect size
+round(exp(aggregate_nc$es),2)
+# Low CI
+round(exp(aggregate_nc$es - 1.96*se),2)
+# Upper CI
+round(exp(aggregate_nc$es + 1.96*se),2)
+
+# p value: https://www.bmj.com/content/343/bmj.d2304
+# Note: The formula for P works only for positive z, so if z is negative we remove the minus sign.
+neg_control_z <- aggregate_nc$es / neg_control_se
+p_nc <- exp(0.717*neg_control_z - 0.416*neg_control_z^2)
+p_nc
+```
+
+### ALSPAC - Prepare to make forest plot for negative controls 
+```{r}
+# Add FDR corrected pvalues
+neg_control_data$p_fdr <- p.adjust(neg_control_data$p, method="fdr")
+
+# Make columns with 95% CIs
+neg_control_data$lowCI <- exp(neg_control_data$log_OR - 1.96*neg_control_data$SE)
+neg_control_data$upCI <- exp(neg_control_data$log_OR + 1.96*neg_control_data$SE)
+
+# Add row to results with aggregated effect size
+agg_row <- list(OR=exp(aggregate_nc$es), SE=sqrt(aggregate_nc$var), p=p_nc, 
+           ace="Pooled effect size", PGS=" ", 
+           var=aggregate_nc$var, log_OR=aggregate_nc$es, id=1, p_fdr=p_nc,
+           lowCI=exp(aggregate_nc$es - 1.96*se),
+           upCI=exp(aggregate_nc$es + 1.96*se))
+nc_results <- rbind(neg_control_data, agg_row, stringsAsFactors=FALSE)
+
+# re-order ACEs
+nc_results$ace <- factor(nc_results$ace)
+levels(nc_results$ace) <- c("maltreatment", "domestic_violence", "par_psych", "par_substance", "par_criminal", "par_sep", "Pooled effect size")
+levels(nc_results$ace)
+levels(nc_results$ace) <- c("Maltreatment", "Domestic violence", "Parental mental illness",
+                              "Parental substance abuse", "Parental criminality", "Parental separation", "Pooled effect size")
+
+# relabel PGS
+nc_results$PGS <- factor(nc_results$PGS, ordered=TRUE, 
+                         levels=c("handedness", "cataracts"))
+levels(nc_results$PGS) <- c("Handedness", "Cataracts")
+
+# Order dataframe according to ACE
+nc_results <- nc_results[order(nc_results$ace),]
+
+# Make dataframe containing polygenic score and p-values
+df_forest_nc <- data.frame(nc_results$PGS, nc_results$p_fdr)
+df_forest_nc$nc_results.p_fdr <- format(round(df_forest_nc$nc_results.p_fdr, 4), nsmall=4)
+```
+
+## ALSPAC - label dataframes to specify ALSPAC ahead of plotting
+```{r}
+long_results_alspac <- long_results
+df_forest_ace_alspac <- df_forest_ace
+nc_results_alspac <- nc_results
+df_forest_nc_alspac <- df_forest_nc
+```
+
+### ALSPAC - Combine forest plot for psychiatric PGSs and negative control PGSs
+```{r}
+dev.off()
+setwd(Figures)
+setEPS(width=5, height=7.5)
+postscript("CC_Hyp1a_ALSPAC.eps")
+# Set location of where to put plots
+layout(matrix(c(1,1,2,2), 2, 2, byrow = TRUE), widths=c(1,1), heights=c(1.85,1))
+
+
+par(mar = c(1, 4, 2, 0.75)) 
+# Plot main results by psychiatric PGS
+forest(long_results_alspac$OR, ci.lb=long_results_alspac$lowCI, ci.ub=long_results_alspac$upCI, # name of your meta-analysis model
+       cex=0.5 ,#expand all text
+       cex.lab=0.5,  #expand x-axis title
+       subset = order(long_results_alspac$ace, long_results_alspac$PGS), # order by date
+       rows = c(49:2, 0),
+       textpos = c(0.1, 1.7),
+       slab=paste(long_results_alspac$ace),
+       ilab = df_forest_ace_alspac,
+       ilab.xpos = c(0.5, 1.8),
+       ilab.pos = c(4, 4),
+       psize=1,
+       xlab = "Odds ratio", cex.axis=0.5,
+       mlab="Random-effects model", # Label meta-analysis estimate
+       header=c("ACE", "Odds ratio (95% CI)"),# Add headers on left and right side,
+       refline=1,
+       top=0.5)# Reduce the amount of white space at the top of the plot
+par(font=2)
+text(0.63, 51, c("Polygenic score"), cex=0.5)
+text(1.86, 51, c("p-value"), cex=0.5)
+abline(h=1)
+
+# Plot negative control PGSs
+par(mar = c(4, 4, 5, 1)) # bottom, left, top, and right. The default is c(5.1, 4.1, 4.1, 2.1)
+forest(nc_results_alspac$OR, ci.lb=nc_results_alspac$lowCI, ci.ub=nc_results_alspac$upCI,
+       cex=0.5 ,#expand all text
+       cex.lab=0.5,  #expand x-axis title
+       slab=paste(nc_results_alspac$ace),
+       textpos = c(0.1, 1.7),
+       ilab = df_forest_nc_alspac,   
+       ilab.xpos = c(0.5, 1.8),
+       ilab.pos = c(4, 4),
+       psize=1,
+       header=c("ACE", "Odds ratio (95% CI)"),# Add headers on left and right side,
+       mlab="Random-effects model",
+       refline=1,
+       xlim = c(0.11,2.04),
+       alim=c(0.6,1.4),
+       xlab = "Odds ratio", 
+       cex.axis=0.5,
+       at=c(0.6, 0.8, 1, 1.2, 1.4),
+       rows = c(13:2, 0.5))
+par(font=2)
+text(c(0.63, 1.86), 15, c("Polygenic score", "p-value"), cex=0.5)
+abline(h=1.25)
+dev.off()
+```
+
+```{r, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+# Clear workspace
+rm(ace_cor_alspac, ace_cor_alspac_nodiag, agg_row, aggregate, aggregate_nc, df_forest_ace, df_forest_ace_alspac,
+   df_forest_nc, df_forest_nc_alspac, dom_vi, long_results, long_results_alspac, maltreatment, nc_results,
+   nc_results_alspac, neg_control_data, neg_control_se, neg_control_z, p, p_nc, par_crim, par_psych, par_sep,
+   par_sub, results , se, z)
+```
+
+### ABCD - Run regressions for associations between PGSs for psychopathology and ACEs
+```{r}
+maltreatment <- reg_hyp1a(abcd_CC$maltreatment, abcd_CC$sex, 
+                     abcd_CC$ADHD_PGS_r, 
+                     abcd_CC$alcohol_PGS_r, 
+                     abcd_CC$antisocial_PGS_r, 
+                     abcd_CC$anxiety_PGS_r, 
+                     abcd_CC$autism_PGS_r, 
+                     abcd_CC$bipolar_PGS_r, 
+                     abcd_CC$depression_PGS_r, 
+                     abcd_CC$schizophrenia_PGS_r, abcd_CC) 
+dom_vi <- reg_hyp1a(abcd_CC$domestic_violence, abcd_CC$sex, 
+                    abcd_CC$ADHD_PGS_r, 
+                    abcd_CC$alcohol_PGS_r, 
+                    abcd_CC$antisocial_PGS_r, 
+                    abcd_CC$anxiety_PGS_r, 
+                    abcd_CC$autism_PGS_r, 
+                    abcd_CC$bipolar_PGS_r, 
+                    abcd_CC$depression_PGS_r, 
+                    abcd_CC$schizophrenia_PGS_r, abcd_CC) 
+par_psych <- reg_hyp1a(abcd_CC$parental_psychopathology, abcd_CC$sex, 
+                     abcd_CC$ADHD_PGS_r, 
+                     abcd_CC$alcohol_PGS_r, 
+                     abcd_CC$antisocial_PGS_r, 
+                     abcd_CC$anxiety_PGS_r, 
+                     abcd_CC$autism_PGS_r, 
+                     abcd_CC$bipolar_PGS_r, 
+                     abcd_CC$depression_PGS_r, 
+                     abcd_CC$schizophrenia_PGS_r, abcd_CC) 
+par_sub <- reg_hyp1a(abcd_CC$parental_substance, abcd_CC$sex, 
+                     abcd_CC$ADHD_PGS_r, 
+                     abcd_CC$alcohol_PGS_r, 
+                     abcd_CC$antisocial_PGS_r, 
+                     abcd_CC$anxiety_PGS_r, 
+                     abcd_CC$autism_PGS_r, 
+                     abcd_CC$bipolar_PGS_r, 
+                     abcd_CC$depression_PGS_r, 
+                     abcd_CC$schizophrenia_PGS_r, abcd_CC) 
+par_crim <- reg_hyp1a(abcd_CC$parental_criminality, abcd_CC$sex, 
+                     abcd_CC$ADHD_PGS_r, 
+                     abcd_CC$alcohol_PGS_r, 
+                     abcd_CC$antisocial_PGS_r, 
+                     abcd_CC$anxiety_PGS_r, 
+                     abcd_CC$autism_PGS_r, 
+                     abcd_CC$bipolar_PGS_r, 
+                     abcd_CC$depression_PGS_r, 
+                     abcd_CC$schizophrenia_PGS_r, abcd_CC) 
+par_sep <- reg_hyp1a(abcd_CC$parental_separation, abcd_CC$sex, 
+                     abcd_CC$ADHD_PGS_r, 
+                     abcd_CC$alcohol_PGS_r, 
+                     abcd_CC$antisocial_PGS_r, 
+                     abcd_CC$anxiety_PGS_r, 
+                     abcd_CC$autism_PGS_r, 
+                     abcd_CC$bipolar_PGS_r, 
+                     abcd_CC$depression_PGS_r, 
+                     abcd_CC$schizophrenia_PGS_r, abcd_CC) 
+```
+
+### ABCD - Get correlation between ACEs for aggregate model 
+```{r}
+# Run correlation between ACE variables
+ace_cor_abcd <- hetcor(abcd_CC[,c("maltreatment", 
+                                     "domestic_violence", 
+                                     "parental_psychopathology", 
+                                     "parental_substance", 
+                                     "parental_criminality", 
+                                     "parental_separation")])$correlations
+
+# Get the mean ACE correlation excluding the diagonal
+ace_cor_abcd_nodiag <- ace_cor_abcd
+diag(ace_cor_abcd_nodiag) <- NA
+mean_ace_cor_abcd <- mean(ace_cor_abcd_nodiag, na.rm=TRUE)
+mean_ace_cor_abcd
+```
+
+### ABCD - Prepare to run aggregate model 
+```{r}
+# Bind all results into one dataframe
+results <- as.data.frame(do.call("rbind", list(maltreatment, dom_vi, 
+                                               par_psych, par_sub, par_crim, par_sep)))
+# Add info on ACE outcome
+results$ace <- c("maltreatment", "domestic_violence", "par_psych", "par_substance", "par_criminal", "par_sep")
+
+# Make dataframe long
+long_results <- reshape(results, varying=names(results)[1:24],
+                        direction="long", idvar="ace",
+                        timevar = "PGS", 
+                        times=c("ADHD", 
+                                "alcohol", 
+                                "antisocial", "anxiety", "autism",
+                                "bipolar", "depression", "schizophrenia"),
+                         v.names=c("OR", "SE", "p"),
+                        sep="_")
+# SE and p are mixed up: re-order
+setnames(long_results, old = c('SE','p'), new = c('p','SE'))
+
+# Prepare dataframe for aggregate meta-analysis
+long_results$var <- long_results$SE^2
+long_results$log_OR <- log(long_results$OR)
+long_results$id <- 1
+```
+
+### ABCD - Run aggregate meta-analysis
+```{r}
+aggregate <- agg(id, log_OR, var, cor=mean_ace_cor_abcd, method = "BHHR", mod=NULL, data=long_results)
+se <- sqrt(aggregate$var)
+
+# Odds ratio
+round(exp(aggregate$es),2)
+# Low 95% CI
+round(exp(aggregate$es - 1.96*se),2)
+# Upper 95% CI
+round(exp(aggregate$es + 1.96*se),2)
+# p value for a 2-sided test (see: https://www.bmj.com/content/343/bmj.d2304)
+z <- aggregate$es / se
+p <- exp(-0.717*z - 0.416*z^2)
+p 
+# Low 90% CI
+round(exp(aggregate$es - 1.645*se),2)
+# Upper 90% CI
+round(exp(aggregate$es + 1.645*se),2)
+```
+
+### ABCD - Prepare to make forest plot 
+```{r}
+# Add FDR corrected pvalues
+long_results$p_fdr <- p.adjust(long_results$p, method="fdr")
+
+# Add columns with 95% CIs
+long_results$lowCI <- exp(long_results$log_OR - 1.96*long_results$SE)
+long_results$upCI <- exp(long_results$log_OR + 1.96*long_results$SE)
+
+# Add row to results with aggregated effect size
+agg_row <- list(ace="Pooled effect size", PGS=" ", OR=exp(aggregate$es), p=p, SE=sqrt(aggregate$var),
+           var=aggregate$var, log_OR=aggregate$es, id=1, p_fdr=p,
+           lowCI=exp(aggregate$es - 1.96*se),
+           upCI=exp(aggregate$es + 1.96*se))
+long_results <- rbind(long_results, agg_row, stringsAsFactors=FALSE)
+
+# relabel ACEs
+long_results$ace <- factor(long_results$ace, ordered=TRUE, 
+                              levels=c("maltreatment", "domestic_violence", "par_psych", "par_substance", "par_criminal", "par_sep", "Pooled effect size"))
+levels(long_results$ace)
+levels(long_results$ace) <- c("Maltreatment", "Domestic violence", "Parental mental illness",
+                              "Parental substance abuse", "Parental criminality", "Parental separation", "Pooled effect size")
+# relabel PGS
+labels <- c(ADHD="ADHD", alcohol="Alcohol dependence", antisocial="Antisocial behaviour", 
+            anxiety="Anxiety", autism="Autism", bipolar="Bipolar disorder",
+            depression="Depression", schizophrenia="Schizophrenia")
+long_results$PGS <- as.character(labels[long_results$PGS])
+
+# Order dataframe according to ACE
+long_results <- long_results[order(long_results$ace),]
+
+# Make dataframe containing polygenic score and p-values
+df_forest_ace <- data.frame(long_results$PGS, long_results$p_fdr)
+rownames(df_forest_ace) <- rownames(long_results)
+df_forest_ace$long_results.p_fdr <- format(round(df_forest_ace$long_results.p_fdr, 4), nsmall=4)
+```
+
+### ABCD - Run regressions for negative controls 
+```{r}
+# Remove existing objects
+rm(maltreatment, dom_vi, par_psych, par_sub, par_crim, par_sep)
+maltreatment <- reg_hyp1a_nc(abcd_CC$maltreatment, abcd_CC$sex, 
+                     abcd_CC$handedness_PGS_r, abcd_CC$cataracts_PGS_r, abcd_CC) 
+dom_vi <- reg_hyp1a_nc(abcd_CC$domestic_violence, abcd_CC$sex, 
+                     abcd_CC$handedness_PGS_r, abcd_CC$cataracts_PGS_r, abcd_CC) 
+par_psych <- reg_hyp1a_nc(abcd_CC$parental_psychopathology, abcd_CC$sex, 
+                     abcd_CC$handedness_PGS_r, abcd_CC$cataracts_PGS_r, abcd_CC) 
+par_sub <- reg_hyp1a_nc(abcd_CC$parental_substance, abcd_CC$sex, 
+                     abcd_CC$handedness_PGS_r, abcd_CC$cataracts_PGS_r, abcd_CC) 
+par_crim <- reg_hyp1a_nc(abcd_CC$parental_criminality, abcd_CC$sex, 
+                         abcd_CC$handedness_PGS_r, abcd_CC$cataracts_PGS_r, abcd_CC) 
+par_sep <- reg_hyp1a_nc(abcd_CC$parental_separation, abcd_CC$sex, 
+                     abcd_CC$handedness_PGS_r, abcd_CC$cataracts_PGS_r, abcd_CC) 
+```
+
+### ABCD - Prepare to run aggregate model for negative controls
+```{r}
+# Bind all results into one dataframe
+neg_control_data <- as.data.frame(do.call("rbind", list(maltreatment, dom_vi, 
+                                               par_psych, par_sub, par_crim, par_sep)))
+# Add info on ACE outcome
+neg_control_data$ace <- c("maltreatment", "domestic_violence", "par_psych", "par_substance", "par_criminal", "par_sep")
+
+# Make dataframe long
+neg_control_data <- reshape(neg_control_data, varying=names(neg_control_data)[1:6],
+                        direction="long", idvar="ace",
+                        timevar = "PGS", 
+                        times=c("handedness", 
+                                "cataracts"),
+                         v.names=c("OR", "SE", "p"),
+                        sep="_")
+# SE and p are mixed up: re-order
+setnames(neg_control_data, old = c('SE','p'), new = c('p','SE'))
+
+# Prepare dataframe for aggregate meta-analysis
+neg_control_data$var <- neg_control_data$SE^2
+neg_control_data$log_OR <- log(neg_control_data$OR)
+neg_control_data$id <- 1
+```
+
+### ABCD - Run aggregate model for negative controls
+```{r}
+aggregate_nc <- agg(id, log_OR, var, cor=mean_ace_cor_abcd, method = "BHHR", mod=NULL, data=neg_control_data)
+neg_control_se <- sqrt(aggregate_nc$var)
+
+# Aggregated effect size
+round(exp(aggregate_nc$es),2)
+# Low CI
+round(exp(aggregate_nc$es - 1.96*se),2)
+# Upper CI
+round(exp(aggregate_nc$es + 1.96*se),2)
+
+# p value: https://www.bmj.com/content/343/bmj.d2304
+# Note: The formula for P works only for positive z, so if z is negative we remove the minus sign.
+neg_control_z <- aggregate_nc$es / neg_control_se
+p_nc <- (1 - pnorm(abs(neg_control_z))) * 2 #https://stats.stackexchange.com/questions/69401/calculate-z-score-from-odds-ratio
+p_nc
+```
+
+### ABCD - Prepare to make forest plot for negative controls 
+```{r}
+# Add FDR corrected pvalues
+neg_control_data$p_fdr <- p.adjust(neg_control_data$p, method="fdr")
+
+# Add column with 95% CIs
+neg_control_data$lowCI <- exp(neg_control_data$log_OR - 1.96*neg_control_data$SE)
+neg_control_data$upCI <- exp(neg_control_data$log_OR + 1.96*neg_control_data$SE)
+
+# Add row to results with aggregated effect size
+agg_row <- list(ace="Pooled effect size", PGS=" ", 
+                OR=exp(aggregate_nc$es), p=p_nc, SE=sqrt(aggregate_nc$var), 
+                var=aggregate_nc$var, log_OR=aggregate_nc$es, id=1, p_fdr=p_nc,
+                lowCI=exp(aggregate_nc$es - 1.96*se),
+                upCI=exp(aggregate_nc$es + 1.96*se))
+nc_results <- rbind(neg_control_data, agg_row, stringsAsFactors=FALSE)
+
+# relabel ACEs
+nc_results$ace <- factor(nc_results$ace)
+levels(nc_results$ace) <- c("maltreatment", "domestic_violence", "par_psych", "par_substance", "par_criminal", "par_sep", "Pooled effect size")
+levels(nc_results$ace)
+levels(nc_results$ace) <- c("Maltreatment", "Domestic violence", "Parental mental illness",
+                              "Parental substance abuse", "Parental criminality", "Parental separation", "Pooled effect size")
+
+# relabel PGS
+nc_results$PGS <- factor(nc_results$PGS, ordered=TRUE, 
+                         levels=c("handedness", "cataracts"))
+levels(nc_results$PGS) <- c("Handedness", "Cataracts")
+
+# Order dataframe according to ACE
+nc_results <- nc_results[order(nc_results$ace),]
+
+# Make dataframe containing polygenic score and p-values
+df_forest_nc <- data.frame(nc_results$PGS, nc_results$p_fdr)
+df_forest_nc$nc_results.p_fdr <- format(round(df_forest_nc$nc_results.p_fdr, 4), nsmall=4)
+```
+
+## ABCD - save dataframes ahead of plotting
+```{r}
+long_results_abcd <- long_results
+df_forest_ace_abcd <- df_forest_ace
+nc_results_abcd <- nc_results
+df_forest_nc_abcd <- df_forest_nc
+```
+
+### ABCD - Combine forest plot for psychiatric PGSs and negative control PGSs
+```{r}
+dev.off()
+setwd(Figures)
+setEPS(width=5, height=7.5)
+postscript("Hyp1a_ABCD_CC.eps")
+
+# Set location of where to put plots
+layout(matrix(c(1,1,2,2), 2, 2, byrow = TRUE), widths=c(1,1), heights=c(1.85,1))
+
+par(mar = c(1, 4, 2, 1))
+# Plot main results by psychiatric PGS
+forest(long_results$OR, ci.lb=long_results$lowCI, ci.ub=long_results$upCI, 
+       cex=0.5 ,#expand all text
+       cex.lab=0.5,  #expand x-axis title
+       subset = order(long_results$ace, long_results$PGS), 
+       rows = c(49:2, 0),
+       textpos = c(-0.27, 2.1),
+       slab=paste(long_results$ace),
+       ilab = df_forest_ace_abcd, 
+       ilab.xpos = c(0.25, 2.3),
+       ilab.pos = c(4, 4),
+       xlim = c(-0.24,2.61),
+       alim=c(0.6,1.8),
+       at=c(0.6,0.8,1,1.2,1.4,1.6,1.8),
+       psize=1,
+       xlab = "Odds ratio", #cex.lab=0.5,
+       mlab="Random-effects model", # Label meta-analysis estimate
+       header=c("ACE", "Odds ratio (95% CI)"),# Add headers on left and right side,
+       refline=1,
+       cex.axis=0.5,
+       top=0.5)# Reduce the amount of white space at the top of the plot
+par(font=2)
+text(c(0.44, 2.4), 51, c("Polygenic score", "p-value"), cex=0.5)
+abline(h=1)
+
+
+# Plot negative control PGSs
+par(mar = c(4, 4, 5, 1)) # bottom, left, top, and right. The default is c(5.1, 4.1, 4.1, 2.1)
+forest(nc_results$OR, ci.lb=nc_results$lowCI, ci.ub=nc_results$upCI,
+       cex=0.5 ,#expand all text
+       cex.lab=0.5,  #expand x-axis title
+       slab=paste(nc_results$ace),
+       textpos = c(-0.27, 2.1),
+       ilab = df_forest_nc,   
+       ilab.xpos = c(0.25, 2.3),
+       ilab.pos = c(4, 4),
+       psize=1,
+       header=c("ACE", "Odds ratio (95% CI)"),# Add headers on left and right side,
+       #xlab = "Odds ratio", cex.axis=0.5,
+       mlab="Random-effects model",
+       refline=1,
+       xlim = c(-0.24,2.61),
+       alim=c(0.6,1.8),
+       at=c(0.6,0.8,1,1.2,1.4,1.6,1.8),
+       xlab = "Odds ratio", 
+       cex.axis=0.5,
+       rows = c(13:2, 0.5))
+par(font=2)
+abline(h=1.25)
+text(c(0.44, 2.4), 15, c("Polygenic score", "p-value"), cex=0.5)
+dev.off()
+```
+
+# Hypothesis 1B 
+
+## ALSPAC - Specify SEM 
+```{r}
+pgs_ace_model_alspac <- '
+## Regressions
+# maltreatment
+maltreatment_0_9.5yrs ~ a1*ADHD_PGS_r + b1*alcohol_PGS_r + c1*antisocial_PGS_r + d1*anxiety_PGS_r + e1*autism_PGS_r + f1*bipolar_PGS_r + g1*depression_PGS_r + h1*schizophrenia_PGS_r + sex
+# domestic violence
+violence_between_parents_0_9.5yrs ~ a2*ADHD_PGS_r + b2*alcohol_PGS_r + c2*antisocial_PGS_r + d2*anxiety_PGS_r + e2*autism_PGS_r + f2*bipolar_PGS_r + g2*depression_PGS_r + h2*schizophrenia_PGS_r + sex
+# parental substance abuse
+substance_household_0_9.5yrs ~ a3*ADHD_PGS_r + b3*alcohol_PGS_r + c3*antisocial_PGS_r + d3*anxiety_PGS_r + e3*autism_PGS_r + f3*bipolar_PGS_r + g3*depression_PGS_r + h3*schizophrenia_PGS_r + sex
+# parental psychopathology
+mental_health_problems_or_suicide_0_9.5yrs ~ a4*ADHD_PGS_r + b4*alcohol_PGS_r + c4*antisocial_PGS_r + d4*anxiety_PGS_r + e4*autism_PGS_r + f4*bipolar_PGS_r + g4*depression_PGS_r + h4*schizophrenia_PGS_r + sex
+# parental criminality
+parent_convicted_offence_0_9.5yrs ~ a5*ADHD_PGS_r + b5*alcohol_PGS_r + c5*antisocial_PGS_r + d5*anxiety_PGS_r + e5*autism_PGS_r + f5*bipolar_PGS_r + g5*depression_PGS_r + h5*schizophrenia_PGS_r + sex
+# parental separation
+parental_separation_0_9.5yrs ~ a6*ADHD_PGS_r + b6*alcohol_PGS_r + c6*antisocial_PGS_r + d6*anxiety_PGS_r + e6*autism_PGS_r + f6*bipolar_PGS_r + g6*depression_PGS_r + h6*schizophrenia_PGS_r + sex
+
+# Variances and covariances
+maltreatment_0_9.5yrs ~~ cvy12* violence_between_parents_0_9.5yrs #covariance btwn maltreatment & domestic violence
+maltreatment_0_9.5yrs ~~ cvy13* substance_household_0_9.5yrs #covariance btwn maltreatment & parent substance abuse
+maltreatment_0_9.5yrs ~~ cvy14*mental_health_problems_or_suicide_0_9.5yrs #covariance btwn maltreatment & parent psychopathology
+maltreatment_0_9.5yrs ~~ cvy15*parent_convicted_offence_0_9.5yrs #covariance btwn maltreatment & and parent criminality
+maltreatment_0_9.5yrs ~~ cvy16*parental_separation_0_9.5yrs #covariance btwn maltreatment & and parental separation
+
+violence_between_parents_0_9.5yrs ~~ cvy23*substance_household_0_9.5yrs #covariance btwn domestic violence & parent substance abuse
+violence_between_parents_0_9.5yrs ~~ cvy24*mental_health_problems_or_suicide_0_9.5yrs #covariance btwn domestic violence & par psych
+violence_between_parents_0_9.5yrs ~~ cv25*parent_convicted_offence_0_9.5yrs #covariance btwn domestic violence & par criminality
+violence_between_parents_0_9.5yrs ~~ cvy26*parental_separation_0_9.5yrs #covariance btwn domestic violence & parental separation
+
+substance_household_0_9.5yrs ~~ cvy34*mental_health_problems_or_suicide_0_9.5yrs #covariance btwn parental substance & par psych
+substance_household_0_9.5yrs ~~ cvy35*parent_convicted_offence_0_9.5yrs #covariance btwn parental substance & parental criminality
+substance_household_0_9.5yrs ~~ cvy36*parental_separation_0_9.5yrs #covariance btwn parental substance & parental separation
+
+mental_health_problems_or_suicide_0_9.5yrs ~~ cvy45*parent_convicted_offence_0_9.5yrs #covariance btwn parental psych & par crim
+mental_health_problems_or_suicide_0_9.5yrs ~~ cvy46*parental_separation_0_9.5yrs  #covariance btwn parental psych & par separation
+
+parent_convicted_offence_0_9.5yrs ~~ cvy56*parental_separation_0_9.5yrs #covariance btwn parental criminality & par separation
+
+# Average effects per PGS
+Av_ADHD:= (a1 + a2 + a3 + a4 + a5 + a6)/6
+Av_alcohol:= (b1 + b2 + b3 + b4 + b5 + b6)/6
+Av_antisocial:= (c1 + c2 + c3 + c4 + c5 + c6)/6
+Av_anxiety:= (d1 + d2 + d3 + d4 + d5 + d6)/6
+Av_autism:= (e1 + e2 + e3 + e4 + e5 + e6)/6
+Av_bipolar:= (f1 + f2 + f3 + f4 + f5 + f6)/6
+Av_depression:= (g1 + g2 + g3 + g4 + g5 + g6)/6
+Av_schizophrenia:= (h1 + h2 + h3 + h4 + h5 + h6)/6
+'
+```
+
+## Fit model and run Wald test to assess differences between polygenic scores
+```{r}
+pgs_diff_alspac <- lavaan(pgs_ace_model_alspac, data=alspac_CC, estimator = "WLSMV",
+                          ordered=c("maltreatment_0_9.5yrs", "violence_between_parents_0_9.5yrs",
+                          "substance_household_0_9.5yrs", "mental_health_problems_or_suicide_0_9.5yrs", 
+                          "parent_convicted_offence_0_9.5yrs", "parental_separation_0_9.5yrs"))
+summary(pgs_diff_alspac)
+
+## Test whether there are differences across PGSs using Wald test
+p_any <- lavTestWald(pgs_diff_alspac, constraints =  c("Av_ADHD == Av_alcohol", "Av_alcohol == Av_antisocial",
+                                                 "Av_antisocial == Av_anxiety", "Av_anxiety == Av_autism",
+                                                 "Av_autism == Av_bipolar", "Av_bipolar == Av_depression",
+                                                 "Av_depression == Av_schizophrenia"))
+p_any$p.value
+```
+
+## ALSPAC - Run pairwise comparisons to test which polygenic scores differ 
+```{r}
+## Test whether pairwise differences fall within the equivalence bounds
+# Extract results
+results_pgs_alspac <- summary(pgs_diff_alspac)
+#Make dataframe including PGS, probit estimate, and probit SE, and log odds estimate and log odds SE
+pgs_data_alspac <- data.frame(PGS = results_pgs_alspac$PE$lhs[148:155],
+                            est = results_pgs_alspac$PE$est[148:155], 
+                            se = results_pgs_alspac$PE$se[148:155])
+pgs_data_alspac$log_odds = pgs_data_alspac$est*1.8
+pgs_data_alspac$log_se = pgs_data_alspac$se*1.8
+
+# Get list of PGSs to compare in log odds difference
+combs_PGS <- combn(c("ADHD", "alcohol dependence", "antisocial behaviour","anxiety", "autism", "bipolar disorder", "depression", "schizophrenia"), 2)
+
+# Edit labels for pairwise comparisons
+pair_combs_PGS <- capitalize(as.vector(mapply(paste, sep = " vs. ", combs_PGS[c(T,F),], combs_PGS[c(F,T),])))
+
+## Calculate pairwise log odds differences
+log_odds_combs_alspac <- combn(pgs_data_alspac$log_odds, 2) # get combinations of log odds ratios between PGSs
+
+## Calculate pairwise log odds differences
+# Define function to get difference in log odds
+diffs_odds <- function(log_odds1, log_odds2) {
+  log_odds_diff <- log_odds1 - log_odds2 # check for calculating SE
+  return(log_odds_diff)
+}
+
+# Pairwise SE
+# Define function to get SE of difference in log odds
+diffs_se <- function(se1, se2) {
+  se_diff <- sqrt( (se1^2) + (se2^2) ) # check for calculating SE
+  return(se_diff)
+}
+
+# Calculate differences between PGS 1 - PGS2
+log_odds_diff_p12 <- mapply(diffs_odds, log_odds_combs_alspac[1,], log_odds_combs_alspac[2,])# get differences between
+log_odds_diff_p12
+
+# Calculate differences between PGS 2 - PGS1 (i.e., other way around)
+log_odds_diff_p21 <- mapply(diffs_odds, log_odds_combs_alspac[2,], log_odds_combs_alspac[1,])# get differences between
+log_odds_diff_p21
+
+# Get combinations of SEs between PGSs
+se_combs_alspac <- combn(pgs_data_alspac$log_se, 2)
+# Calculate SE for differences between PGS 1 - PGS2
+se_diff_p12  <- mapply(diffs_se, se_combs_alspac[1,], se_combs_alspac[2,])
+# Calculate SE for differences between PGS 2 - PGS1 (i.e., other way around)
+se_diff_p21 <- mapply(diffs_se, se_combs_alspac[2,], se_combs_alspac[1,])
+
+# Make dataframe
+pgs_diff_alspac <- data.frame(pair_combs_PGS, log_odds_diff_p12, log_odds_diff_p21, se_diff_p12, se_diff_p21) # log odds diffs and SEs are same
+
+# Add 90% CIs
+pgs_diff_alspac$low_ci_p12 <- pgs_diff_alspac$log_odds_diff_p12 - (1.645*pgs_diff_alspac$se_diff_p12) # 90% low CI
+pgs_diff_alspac$high_ci_p12 <- pgs_diff_alspac$log_odds_diff_p12 + (1.645*pgs_diff_alspac$se_diff_p12) # 90% upper CI
+# Add 90% CIs for differences between PGS 2 - PGS1
+pgs_diff_alspac$low_ci_p21 <- pgs_diff_alspac$log_odds_diff_p21 - (1.645*pgs_diff_alspac$se_diff_p21) # 90% low CI
+pgs_diff_alspac$high_ci_p21 <- pgs_diff_alspac$log_odds_diff_p21 + (1.645*pgs_diff_alspac$se_diff_p21) # 90% upper CI
+pgs_diff_alspac
+
+# Add pair combs column for log_odds_diff_p21 results
+pgs_diff_alspac$pair_combs_p21 <- paste(capitalize(trimws(sapply(strsplit(pgs_diff_alspac$pair_combs,"vs."), `[`, 2))), "vs.", sapply(strsplit(pgs_diff_alspac$pair_combs,"vs. "), `[`, 1))
+
+## Make long dataframe
+# rename pair_combs to pair_combs_p12 so everything is in consistent naming style
+pgs_diff_alspac <- dplyr::rename(pgs_diff_alspac, pair_combs_p12 = pair_combs_PGS)
+pgs_diff_alspac$id <- 1:nrow(pgs_diff_alspac)
+pgs_diff_alspac_long <- reshape(pgs_diff_alspac, 
+                         direction="long",
+                         v.names=c("pair_combs", "log_odds_diff", "se_diff", "low_ci", "high_ci"),
+                         varying=list(c("pair_combs_p12", "pair_combs_p21"), 
+                                      c("log_odds_diff_p12", "log_odds_diff_p21"),
+                                      c("se_diff_p12", "se_diff_p21"),
+                                      c("low_ci_p12", "low_ci_p21"),
+                                      c("high_ci_p12", "high_ci_p21")),
+                         idvar="id")
+
+## Plot positive differences only (so the PGS with the larger effect is shown first)
+pgs_diff_alspac_long <- pgs_diff_alspac_long[order(pgs_diff_alspac_long[,'pair_combs']), ]
+pgs_diff_alspac_long <- pgs_diff_alspac_long[pgs_diff_alspac_long$log_odds_diff>=0,]
+
+## Add p-values
+# p value for a 2-sided test (see: https://www.bmj.com/content/343/bmj.d2304)
+pgs_diff_alspac_long$z <- pgs_diff_alspac_long$log_odds_diff / pgs_diff_alspac_long$se_diff
+pgs_diff_alspac_long$p <- 2*(1-pnorm(pgs_diff_alspac_long$z))
+
+## Prepare dataframe for plotting
+# make paircombs an ordered factor
+pgs_diff_alspac_long$pair_combs <- factor(pgs_diff_alspac_long$pair_combs, levels = pgs_diff_alspac_long$pair_combs)
+
+# add var indicating if significant difference or not 
+pgs_diff_alspac_long$sig <- ifelse(pgs_diff_alspac_long$p<=0.05, 0, 1)
+
+## Order dataframe by significant result or not
+pgs_diff_alspac_long <- pgs_diff_alspac_long[order(pgs_diff_alspac_long$sig, pgs_diff_alspac_long$pair_combs),] 
+
+## Remove capitalisation from second named PGS 
+pgs_diff_alspac_long$pair_combs <- as.character(paste0(sapply(strsplit((as.character(pgs_diff_alspac_long$pair_combs)), 
+                                                          " vs. "), "[", 1), " vs. ", 
+                                  tolower(sapply(strsplit((as.character(pgs_diff_alspac_long$pair_combs)), " vs. "), "[", 2))))
+
+## Except ADHD
+pgs_diff_alspac_long$pair_combs[pgs_diff_alspac_long$pair_combs=="Depression vs. adhd " ] <- "Depression vs. ADHD"
+pgs_diff_alspac_long$pair_combs[pgs_diff_alspac_long$pair_combs=="Antisocial behaviour vs. adhd " ] <- "Antisocial behaviour vs. ADHD"
+pgs_diff_alspac_long$pair_combs[pgs_diff_alspac_long$pair_combs=="Anxiety vs. adhd " ] <- "Anxiety vs. ADHD"
+pgs_diff_alspac_long$pair_combs[pgs_diff_alspac_long$pair_combs=="Bipolar disorder vs. adhd " ] <- "Bipolar disorder vs. ADHD"
+```
+
+## ABCD - Specify SEM 
+```{r}
+pgs_ace_model <- '
+## Regressions
+# maltreatment
+maltreatment ~ a1*ADHD_PGS_r + b1*alcohol_PGS_r + c1*antisocial_PGS_r + d1*anxiety_PGS_r + e1*autism_PGS_r + f1*bipolar_PGS_r + g1*depression_PGS_r + h1*schizophrenia_PGS_r + sex
+# domestic violence
+domestic_violence ~ a2*ADHD_PGS_r + b2*alcohol_PGS_r + c2*antisocial_PGS_r + d2*anxiety_PGS_r + e2*autism_PGS_r + f2*bipolar_PGS_r + g2*depression_PGS_r + h2*schizophrenia_PGS_r + sex
+# parental substance abuse
+parental_substance ~ a3*ADHD_PGS_r + b3*alcohol_PGS_r + c3*antisocial_PGS_r + d3*anxiety_PGS_r + e3*autism_PGS_r + f3*bipolar_PGS_r + g3*depression_PGS_r + h3*schizophrenia_PGS_r + sex
+# parental psychopathology
+parental_psychopathology ~ a4*ADHD_PGS_r + b4*alcohol_PGS_r + c4*antisocial_PGS_r + d4*anxiety_PGS_r + e4*autism_PGS_r + f4*bipolar_PGS_r + g4*depression_PGS_r + h4*schizophrenia_PGS_r + sex
+# parental criminality
+parental_criminality ~ a5*ADHD_PGS_r + b5*alcohol_PGS_r + c5*antisocial_PGS_r + d5*anxiety_PGS_r + e5*autism_PGS_r + f5*bipolar_PGS_r + g5*depression_PGS_r + h5*schizophrenia_PGS_r + sex
+# parental separation
+parental_separation ~ a6*ADHD_PGS_r + b6*alcohol_PGS_r + c6*antisocial_PGS_r + d6*anxiety_PGS_r + e6*autism_PGS_r + f6*bipolar_PGS_r + g6*depression_PGS_r + h6*schizophrenia_PGS_r + sex
+
+# Variances and covariances
+maltreatment ~~ cvy12* domestic_violence #covariance btwn maltreatment & domestic violence
+maltreatment ~~ cvy13* parental_substance  #covariance btwn maltreatment & parent substance abuse
+maltreatment ~~ cvy14*parental_psychopathology #covariance btwn maltreatment & parent psychopathology
+maltreatment ~~ cvy15*parental_criminality #covariance btwn maltreatment & and parent criminality
+maltreatment ~~ cvy16*parental_separation #covariance btwn maltreatment & and parental separation
+
+domestic_violence ~~ cvy23*parental_substance #covariance btwn domestic violence & parent substance abuse
+domestic_violence ~~ cvy24*parental_psychopathology #covariance btwn domestic violence & par psych
+domestic_violence ~~ cv25*parental_criminality #covariance btwn domestic violence & par criminality
+domestic_violence ~~ cvy26*parental_separation #covariance btwn domestic violence & parental separation
+
+parental_substance ~~ cvy34*parental_psychopathology #covariance btwn parental substance & par psych
+parental_substance ~~ cvy35*parental_criminality #covariance btwn parental substance & parental criminality
+parental_substance ~~ cvy36*parental_separation #covariance btwn parental substance & parental separation
+
+parental_psychopathology ~~ cvy45*parental_criminality #covariance btwn parental psych & par crim
+parental_psychopathology ~~ cvy46*parental_separation #covariance btwn parental psych & par separation
+
+parental_criminality ~~ cvy56*parental_separation #covariance btwn parental criminality & par separation
+
+# Average effects per PGS
+Av_ADHD:=(a1 + a2 + a3 + a4 + a5 + a6)/6
+Av_alcohol:=(b1 + b2 + b3 + b4 + b5 + b6)/6
+Av_antisocial:=(c1 + c2 + c3 + c4 + c5 + c6)/6
+Av_anxiety:=(d1 + d2 + d3 + d4 + d5 + d6)/6
+Av_autism:=(e1 + e2 + e3 + e4 + e5 + e6)/6
+Av_bipolar:=(f1 + f2 + f3 + f4 + f5 + f6)/6
+Av_depression:=(g1 + g2 + g3 + g4 + g5 + g6)/6
+Av_schizophrenia:=(h1 + h2 + h3 + h4 + h5 + h6)/6
+'
+```
+
+## ABCD - Fit model and run Wald test to assess differences between polygenic scores
+```{r}
+pgs_diff_abcd <- lavaan(pgs_ace_model, data=abcd_CC, estimator = "WLSMV",
+                ordered=c("maltreatment", "domestic_violence",
+                          "parental_substance", "parental_psychopathology", 
+                          "parental_criminality", "parental_separation"))
+summary(pgs_diff_abcd)
+
+## Test whether there are differences across PGSs using Wald test
+p_any <- lavTestWald(pgs_diff_abcd, constraints =  c("Av_ADHD == Av_alcohol", "Av_alcohol == Av_antisocial",
+                                                 "Av_antisocial == Av_anxiety", "Av_anxiety == Av_autism",
+                                                 "Av_autism == Av_bipolar", "Av_bipolar == Av_depression",
+                                                 "Av_depression == Av_schizophrenia"))
+p_any$p.value
+```
+
+## ABCD - Run pairwise comparisons to test which polygenic scores differ 
+```{r}
+# Get each combination of polygenic score effects to compare in pairwise comparisons
+combs <- combn(c("Av_ADHD", "Av_alcohol", "Av_antisocial","Av_anxiety", "Av_autism", "Av_bipolar", "Av_depression", "Av_schizophrenia"), 2)
+pair_combs <- as.vector(mapply(paste, sep = " == ", combs[c(T,F),], combs[c(F,T),])) #https://stackoverflow.com/questions/37901142/paste-multiple-rows-together-in-r
+
+# Run pairwise wald tests 
+
+# Generate function to conduct pairwise comparisons between polygenic scores
+pairwise_Wald <- function(model, pair) {
+  wald <- lavTestWald(model, constraints = pair)
+  return(c(pair, as.numeric(unlist(wald["p.value"]))))
+}
+
+pgs_comparison_abcd <- lapply(pair_combs, pairwise_Wald, model=pgs_diff_abcd)
+
+# Make dataframe with pairwise comparison p-values
+abcd_wald_pairwise_comp <- data.frame(matrix(unlist(pgs_comparison_abcd), nrow=length(pgs_comparison_abcd), 
+                                               byrow=TRUE, dimnames=list(NULL, c("PGS_comparison", "pvalue"))))
+abcd_wald_pairwise_comp$pvalue <- as.numeric(as.character(abcd_wald_pairwise_comp$pvalue)) # convert p-value to numeric
+
+# Show significant differences according to Wald test
+sig_abcd <- abcd_wald_pairwise_comp %>% dplyr::filter(pvalue<=0.05)
+sig_abcd
+
+## Test whether pairwise differences fall within the equivalence bounds
+# Extract results
+results_pgs_abcd <- summary(pgs_diff_abcd)
+#Make dataframe including PGS, probit estimate, and probit SE, and log odds estimate and log odds SE
+pgs_data_abcd <- data.frame(PGS = results_pgs_abcd$PE$lhs[148:155],
+                            est = results_pgs_abcd$PE$est[148:155], 
+                            se = results_pgs_abcd$PE$se[148:155])
+pgs_data_abcd$log_odds = pgs_data_abcd$est*1.8
+pgs_data_abcd$log_se = pgs_data_abcd$se*1.8
+
+# Get list of PGSs to compare in log odds difference
+combs_PGS <- combn(c("ADHD", "alcohol dependence", "antisocial behaviour","anxiety", "autism", "bipolar disorder", "depression", "schizophrenia"), 2)
+
+# Edit labels for pairwise comparisons
+library(Hmisc)
+pair_combs_PGS <- capitalize(as.vector(mapply(paste, sep = " vs. ", combs_PGS[c(T,F),], combs_PGS[c(F,T),])))
+
+## Calculate pairwise log odds differences
+log_odds_combs_abcd <- combn(pgs_data_abcd$log_odds, 2) # get combinations of log odds ratios between PGSs
+
+# Calculate differences between PGS 1 - PGS2
+log_odds_diff_p12 <- mapply(diffs_odds, log_odds_combs_abcd[1,], log_odds_combs_abcd[2,])# get differences between
+log_odds_diff_p12
+
+# Calculate differences between PGS 2 - PGS1 (i.e., other way around)
+log_odds_diff_p21 <- mapply(diffs_odds, log_odds_combs_abcd[2,], log_odds_combs_abcd[1,])# get differences between
+log_odds_diff_p21
+
+# # get combinations of SEs between PGSs
+se_combs_abcd <- combn(pgs_data_abcd$log_se, 2)
+# Calculate SE for differences between PGS 1 - PGS2
+se_diff_p12  <- mapply(diffs_se, se_combs_abcd[1,], se_combs_abcd[2,])
+# Calculate SE for differences between PGS 2 - PGS1 (i.e., other way around)
+se_diff_p21 <- mapply(diffs_se, se_combs_abcd[2,], se_combs_abcd[1,])
+
+# Make dataframe
+pgs_diff_abcd <- data.frame(pair_combs_PGS, log_odds_diff_p12, log_odds_diff_p21, se_diff_p12, se_diff_p21) # log odds diffs and SEs are same
+
+# Add 90% CIs
+pgs_diff_abcd$low_ci_p12 <- pgs_diff_abcd$log_odds_diff_p12 - (1.645*pgs_diff_abcd$se_diff_p12) # 90% low CI
+pgs_diff_abcd$high_ci_p12 <- pgs_diff_abcd$log_odds_diff_p12 + (1.645*pgs_diff_abcd$se_diff_p12) # 90% upper CI
+# Add 90% CIs for differences between PGS 2 - PGS1
+pgs_diff_abcd$low_ci_p21 <- pgs_diff_abcd$log_odds_diff_p21 - (1.645*pgs_diff_abcd$se_diff_p21) # 90% low CI
+pgs_diff_abcd$high_ci_p21 <- pgs_diff_abcd$log_odds_diff_p21 + (1.645*pgs_diff_abcd$se_diff_p21) # 90% upper CI
+pgs_diff_abcd
+
+# Add pair combs column for log_odds_diff_p21 results
+pgs_diff_abcd$pair_combs_p21 <- paste(capitalize(trimws(sapply(strsplit(pgs_diff_abcd$pair_combs,"vs."), `[`, 2))), "vs.", sapply(strsplit(pgs_diff_abcd$pair_combs,"vs. "), `[`, 1))
+
+## Make long dataframe
+# rename pair_combs to pair_combs_p12 so everything is in consistent naming style
+pgs_diff_abcd <- dplyr::rename(pgs_diff_abcd, pair_combs_p12 = pair_combs_PGS)
+pgs_diff_abcd$id <- 1:nrow(pgs_diff_abcd)
+pgs_diff_abcd_long <- reshape(pgs_diff_abcd, 
+                         direction="long",
+                         v.names=c("pair_combs", "log_odds_diff", "se_diff", "low_ci", "high_ci"),
+                         varying=list(c("pair_combs_p12", "pair_combs_p21"), 
+                                      c("log_odds_diff_p12", "log_odds_diff_p21"),
+                                      c("se_diff_p12", "se_diff_p21"),
+                                      c("low_ci_p12", "low_ci_p21"),
+                                      c("high_ci_p12", "high_ci_p21")),
+                         idvar="id")
+
+## Plot positive differences only (so the PGS with the larger effect is shown first)
+pgs_diff_abcd_long <- pgs_diff_abcd_long[order(pgs_diff_abcd_long[,'pair_combs']), ]
+pgs_diff_abcd_long <- pgs_diff_abcd_long[pgs_diff_abcd_long$log_odds_diff>=0,]
+
+## Add p-values
+# p value for a 2-sided test (see: https://www.bmj.com/content/343/bmj.d2304)
+pgs_diff_abcd_long$z <- pgs_diff_abcd_long$log_odds_diff / pgs_diff_abcd_long$se_diff
+pgs_diff_abcd_long$p <- 2*(1-pnorm(pgs_diff_abcd_long$z))
+
+## Prepare dataframe for plotting
+# make paircombs an ordered factor
+pgs_diff_abcd_long$pair_combs <- factor(pgs_diff_abcd_long$pair_combs, levels = pgs_diff_abcd_long$pair_combs)
+
+# add var indicating if significant difference or not 
+pgs_diff_abcd_long$sig <- ifelse(pgs_diff_abcd_long$p<=0.05, 0, 1)
+
+## Order dataframe by significant result or not
+pgs_diff_abcd_long <- pgs_diff_abcd_long[order(pgs_diff_abcd_long$sig, pgs_diff_abcd_long$pair_combs),] 
+
+## Remove capitalisation from second named PGS 
+pgs_diff_abcd_long$pair_combs <- as.character(paste0(sapply(strsplit((as.character(pgs_diff_abcd_long$pair_combs)), 
+                                                          " vs. "), "[", 1), " vs. ", 
+                                  tolower(sapply(strsplit((as.character(pgs_diff_abcd_long$pair_combs)), " vs. "), "[", 2))))
+```
+
+## ALSPAC and ABCD - Plot results for Hyp1b
+```{r}
+dev.off()
+
+# Prepare to save as EPS
+setwd(Figures)
+setEPS(width=6.6, height=9)
+postscript("Hyp1b_CompleteCases_ALSPAC_ABCD.eps")
+
+# Set location of where to put plots
+layout(matrix(c(1,1,2,2), 2, 2, byrow = TRUE), widths=c(1,1), heights=c(1,1))
+
+par(mar = c(3, 4, 2, 2))
+# Plot ALSPAC results
+forest(pgs_diff_alspac_long$log_odds_diff, ci.lb=pgs_diff_alspac_long$low_ci, ci.ub=pgs_diff_alspac_long$high_ci,
+       cex=0.7,
+       slab=paste(pgs_diff_alspac_long$pair_combs),
+       xlab = "Difference in log odds ratio", cex.axis=0.7,
+       rows = c(29:27, 24:0),
+       ylim=c(0,33),
+       xlim=c(-0.5, 0.65),
+       alim=c(-0.1,0.3),
+       at=c(-1, 0, 0.1, 0.2, 0.3),
+       psize=1,
+       ilab = format(round(pgs_diff_alspac_long$p,4), nsmall=4),
+       ilab.xpos = c(0.53),
+       ilab.pos = c(4),
+       textpos = c(-0.5, 0.5))
+par(font=2)
+text(c(-0.36, 0.41, 0.57), 32, c("Polygenic score comparison", 
+                                "Log odds diff. (90% CI)",
+                                "p-value"), cex=0.7)
+segments(x0=0.1, y0=-1, x1=0.1, y1=30,col="red", lty = 5)
+segments(x0=-0.1, y0=-1, x1=-0.1, y1=30,col="red", lty = 5)
+par(font=4)       
+text(-0.5, c(30, 25), pos=4, c("Statistically significant differences",
+                               "Statistically non-significant differences"), cex=0.7)
+
+par(mar = c(4, 4, 2, 2))
+# Plot ABCD results
+forest(pgs_diff_abcd_long$log_odds_diff, ci.lb=pgs_diff_abcd_long$low_ci, ci.ub=pgs_diff_abcd_long$high_ci,
+       cex=0.7,
+       slab=paste(pgs_diff_abcd_long$pair_combs),
+       xlab = "Difference in log odds ratio", cex.axis=0.7,
+       rows = c(29:14, 11:0),
+       ylim=c(0,33),
+       xlim=c(-0.5, 0.65),
+       alim=c(-0.1,0.3),
+       at=c(-1, 0, 0.1, 0.2, 0.3),
+       psize=1,
+       ilab = format(round(pgs_diff_abcd_long$p,4), nsmall=4),
+       ilab.xpos = c(0.53),
+       ilab.pos = c(4),
+       textpos = c(-0.5, 0.5))
+par(font=2)
+text(c(-0.36, 0.41, 0.57), 32, c("Polygenic score comparison", 
+                                "Log odds diff. (90% CI)",
+                                "p-value"), cex=0.7)
+segments(x0=0.1, y0=-1, x1=0.1, y1=30,col="red", lty = 5)
+segments(x0=-0.1, y0=-1, x1=-0.1, y1=30,col="red", lty = 5)
+par(font=4)       
+text(-0.5, c(30, 12), pos=4, c("Statistically significant differences",
+                               "Statistically non-significant differences"), cex=0.7)
+dev.off()
+```
+
+```{r clear workspace hyp1b, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+# Clear workspace
+rm(abcd_wald_pairwise_comp, ace_cor_abcd, ace_cor_abcd_nodiag, agg_row, 
+   aggregate, aggregate_nc, alspac_wald_pairwise_comp, combs, combs_PGS, df_forest_ace,
+   df_forest_ace_abcd, df_forest_nc, df_forest_nc_abcd, dom_vi,
+   log_odds_combs_abcd, log_odds_combs_alspac, log_odds_diff_p12, log_odds_diff_p21,   
+   long_results, long_results_abcd, maltreatment,  
+   nc_results, nc_results_abcd, neg_control_data, neg_control_se, neg_control_z,  
+   p, p_any, p_nc, pairwise_Wald, par_crim,par_psych, par_sep, par_sub, pgs_ace_model,
+   pgs_ace_model_alspac, pgs_comparison_abcd, pgs_comparison_alspac, pgs_data_abcd,        
+   pgs_data_alspac, pgs_diff_abcd, pgs_diff_abcd_long, pgs_diff_alspac, pgs_diff_alspac_long,     
+   results, results_pgs_abcd, results_pgs_alspac, se,se_combs_abcd, se_combs_alspac, se_diff_p12,
+   se_diff_p21, sig_abcd, sig_alspac, z)  
+```
+
+# Hypothesis 1C 
+
+## ALSPAC - Specify SEM
+```{r}
+ace_diffs_model <- '
+## Regressions
+# maltreatment
+maltreatment_0_9.5yrs ~ a1*ADHD_PGS_r + b1*alcohol_PGS_r + c1*antisocial_PGS_r + d1*anxiety_PGS_r + e1*autism_PGS_r + f1*bipolar_PGS_r + g1*depression_PGS_r + h1*schizophrenia_PGS_r + sex
+# domestic violence
+violence_between_parents_0_9.5yrs ~ a2*ADHD_PGS_r + b2*alcohol_PGS_r + c2*antisocial_PGS_r + d2*anxiety_PGS_r + e2*autism_PGS_r + f2*bipolar_PGS_r + g2*depression_PGS_r + h2*schizophrenia_PGS_r + sex
+# parental substance abuse
+substance_household_0_9.5yrs ~ a3*ADHD_PGS_r + b3*alcohol_PGS_r + c3*antisocial_PGS_r + d3*anxiety_PGS_r + e3*autism_PGS_r + f3*bipolar_PGS_r + g3*depression_PGS_r + h3*schizophrenia_PGS_r + sex
+# parental mental illness
+mental_health_problems_or_suicide_0_9.5yrs ~ a4*ADHD_PGS_r + b4*alcohol_PGS_r + c4*antisocial_PGS_r + d4*anxiety_PGS_r + e4*autism_PGS_r + f4*bipolar_PGS_r + g4*depression_PGS_r + h4*schizophrenia_PGS_r + sex
+# parental criminality
+parent_convicted_offence_0_9.5yrs ~ a5*ADHD_PGS_r + b5*alcohol_PGS_r + c5*antisocial_PGS_r + d5*anxiety_PGS_r + e5*autism_PGS_r + f5*bipolar_PGS_r + g5*depression_PGS_r + h5*schizophrenia_PGS_r + sex
+# parental separation
+parental_separation_0_9.5yrs ~ a6*ADHD_PGS_r + b6*alcohol_PGS_r + c6*antisocial_PGS_r + d6*anxiety_PGS_r + e6*autism_PGS_r + f6*bipolar_PGS_r + g6*depression_PGS_r + h6*schizophrenia_PGS_r + sex 
+
+# Variances and covariances
+maltreatment_0_9.5yrs ~~ cvy12* violence_between_parents_0_9.5yrs #covariance btwn maltreatment & domestic violence
+maltreatment_0_9.5yrs ~~ cvy13* substance_household_0_9.5yrs #covariance btwn maltreatment & parent substance abuse
+maltreatment_0_9.5yrs ~~ cvy14*mental_health_problems_or_suicide_0_9.5yrs #covariance btwn maltreatment & parent psychopathology
+maltreatment_0_9.5yrs ~~ cvy15*parent_convicted_offence_0_9.5yrs #covariance btwn maltreatment & and parent criminality
+maltreatment_0_9.5yrs ~~ cvy16*parental_separation_0_9.5yrs #covariance btwn maltreatment & and parental separation
+
+violence_between_parents_0_9.5yrs ~~ cvy23*substance_household_0_9.5yrs #covariance btwn domestic violence & parent substance abuse
+violence_between_parents_0_9.5yrs ~~ cvy24*mental_health_problems_or_suicide_0_9.5yrs #covariance btwn domestic violence & par psych
+violence_between_parents_0_9.5yrs ~~ cv25*parent_convicted_offence_0_9.5yrs #covariance btwn domestic violence & par criminality
+violence_between_parents_0_9.5yrs ~~ cvy26*parental_separation_0_9.5yrs #covariance btwn domestic violence & parental separation
+
+substance_household_0_9.5yrs ~~ cvy34*mental_health_problems_or_suicide_0_9.5yrs #covariance btwn parental substance & par psych
+substance_household_0_9.5yrs ~~ cvy35*parent_convicted_offence_0_9.5yrs #covariance btwn parental substance & parental criminality
+substance_household_0_9.5yrs ~~ cvy36*parental_separation_0_9.5yrs #covariance btwn parental substance & parental separation
+
+mental_health_problems_or_suicide_0_9.5yrs ~~ cvy45*parent_convicted_offence_0_9.5yrs #covariance btwn parental psych & par crim
+mental_health_problems_or_suicide_0_9.5yrs ~~ cvy46*parental_separation_0_9.5yrs  #covariance btwn parental psych & par separation
+
+parent_convicted_offence_0_9.5yrs ~~ cvy56*parental_separation_0_9.5yrs #covariance btwn parental criminality & par separation
+
+# Average effects per ACE
+Av_maltreatment:= (a1 + b1 + c1 + d1 + e1 + f1 + g1 + h1)/8
+Av_dom_violence:= (a2 + b2 + c2 + d2 + e2 + f2 + g2 + h2)/8
+Av_par_sub:= (a3 + b3 + c3 + d3 + e3 + f3 + g3 + h3)/8
+Av_par_psych:= (a4 + b4 + c4 + d4 + e4 + f4 + g4 + h4)/8
+Av_par_crim:= (a5 + b5 + c5 + d5 + e5 + f5 + g5 + h5)/8
+Av_par_sep:= (a6 + b6 + c6 + d6 + e6 + f6 + g6 + h6)/8
+'
+```
+
+## ALSPAC - Fit model and run Wald test
+```{r}
+fit.mi.ace <- lavaan(ace_diffs_model, data=alspac_CC, estimator = "WLSMV",
+                    ordered=c("maltreatment_0_9.5yrs", "violence_between_parents_0_9.5yrs",
+                              "substance_household_0_9.5yrs", "mental_health_problems_or_suicide_0_9.5yrs", 
+                              "parent_convicted_offence_0_9.5yrs", "parental_separation_0_9.5yrs"))
+summary(fit.mi.ace)
+
+## Test whether there are differences across PGSs using Wald test
+p_any <- lavTestWald(fit.mi.ace, constraints =  c("Av_maltreatment == Av_dom_violence", 
+                                                     "Av_dom_violence == Av_par_sub",
+                                                     "Av_par_sub == Av_par_psych", 
+                                                     "Av_par_psych == Av_par_crim",
+                                                     "Av_par_crim == Av_par_sep"))
+p_any$p.value
+```
+
+## ALSPAC - Run pairwise comparisons to test whether differences between ACEs fall within the equivalence bounds
+```{r}
+# Extract results
+results_aces <- parameterTable(fit.mi.ace)
+est <- results_aces$est[148:153]
+se <- results_aces$se[148:153]
+ACE <- results_aces$label[148:153]
+ace_data <- data.frame(ACE, est, se, log_odds = est*1.8, log_se = se*1.8) # Make dataframe including ACE, probit estimate, and probit SE
+# Generate list of ACEs to compare
+combs <- combn(c("maltreatment", "domestic violence", "parental substance abuse",
+                 "parental psychopathology", "parental criminality", "parental separation"), 2)
+pair_combs <- capitalize(as.vector(mapply(paste, sep = " vs. ", combs[c(T,F),], combs[c(F,T),]))) #https://stackoverflow.com/questions/37901142/paste-multiple-rows-together-in-r
+
+# Pairwise log odds differences
+log_odds_combs <- combn(ace_data$log_odds, 2) # get combinations of log odds ratios between ACEs
+log_odds_diff <- mapply(diffs_odds, log_odds_combs[1,], log_odds_combs[2,])# get differences between ACEs
+
+# Pairwise SE
+se_combs <- combn(ace_data$log_se, 2)
+se_diff <- mapply(diffs_se, se_combs[1,], se_combs[2,])
+
+# Make dataframe
+ace_diff <- data.frame(pair_combs, log_odds_diff, se_diff)
+# Add 90% CIs
+ace_diff$low_ci <- ace_diff$log_odds_diff - (1.645*se_diff) # 90% low CI
+ace_diff$high_ci <- ace_diff$log_odds_diff + (1.645*se_diff) # 90% upper CI
+
+# make paircombs an ordered factor
+ace_diff$pair_combs <- factor(ace_diff$pair_combs, levels = ace_diff$pair_combs)
+
+# Save to specify data refers to alspac
+ace_diff_alspac <- ace_diff
+```
+
+
+```{r}
+# remove objects storing ALSPAC data
+rm(ace_diff, results_aces)
+```
+
+## ABCD - Specify SEM
+```{r}
+ace_diffs_model_abcd <- '
+## Regressions
+# maltreatment
+maltreatment ~ a1*ADHD_PGS_r + b1*alcohol_PGS_r + c1*antisocial_PGS_r + d1*anxiety_PGS_r + e1*autism_PGS_r + f1*bipolar_PGS_r + g1*depression_PGS_r + h1*schizophrenia_PGS_r + sex
+# domestic violence
+domestic_violence ~ a2*ADHD_PGS_r + b2*alcohol_PGS_r + c2*antisocial_PGS_r + d2*anxiety_PGS_r + e2*autism_PGS_r + f2*bipolar_PGS_r + g2*depression_PGS_r + h2*schizophrenia_PGS_r + sex
+# parental substance abuse
+parental_substance ~ a3*ADHD_PGS_r + b3*alcohol_PGS_r + c3*antisocial_PGS_r + d3*anxiety_PGS_r + e3*autism_PGS_r + f3*bipolar_PGS_r + g3*depression_PGS_r + h3*schizophrenia_PGS_r + sex
+# parental mental illness
+parental_psychopathology ~ a4*ADHD_PGS_r + b4*alcohol_PGS_r + c4*antisocial_PGS_r + d4*anxiety_PGS_r + e4*autism_PGS_r + f4*bipolar_PGS_r + g4*depression_PGS_r + h4*schizophrenia_PGS_r + sex
+# parental criminality
+parental_criminality ~ a5*ADHD_PGS_r + b5*alcohol_PGS_r + c5*antisocial_PGS_r + d5*anxiety_PGS_r + e5*autism_PGS_r + f5*bipolar_PGS_r + g5*depression_PGS_r + h5*schizophrenia_PGS_r + sex
+# parental separation
+parental_separation ~ a6*ADHD_PGS_r + b6*alcohol_PGS_r + c6*antisocial_PGS_r + d6*anxiety_PGS_r + e6*autism_PGS_r + f6*bipolar_PGS_r + g6*depression_PGS_r + h6*schizophrenia_PGS_r + sex 
+
+# Variances and covariances
+maltreatment ~~ cvy12* domestic_violence #covariance btwn maltreatment & domestic violence
+maltreatment ~~ cvy13* parental_substance  #covariance btwn maltreatment & parent substance abuse
+maltreatment ~~ cvy14*parental_psychopathology #covariance btwn maltreatment & parent psychopathology
+maltreatment ~~ cvy15*parental_criminality #covariance btwn maltreatment & and parent criminality
+maltreatment ~~ cvy16*parental_separation #covariance btwn maltreatment & and parental separation
+
+domestic_violence ~~ cvy23*parental_substance #covariance btwn domestic violence & parent substance abuse
+domestic_violence ~~ cvy24*parental_psychopathology #covariance btwn domestic violence & par psych
+domestic_violence ~~ cv25*parental_criminality #covariance btwn domestic violence & par criminality
+domestic_violence ~~ cvy26*parental_separation #covariance btwn domestic violence & parental separation
+
+parental_substance ~~ cvy34*parental_psychopathology #covariance btwn parental substance & par psych
+parental_substance ~~ cvy35*parental_criminality #covariance btwn parental substance & parental criminality
+parental_substance ~~ cvy36*parental_separation #covariance btwn parental substance & parental separation
+
+parental_psychopathology ~~ cvy45*parental_criminality #covariance btwn parental psych & par crim
+parental_psychopathology ~~ cvy46*parental_separation #covariance btwn parental psych & par separation
+
+parental_criminality ~~ cvy56*parental_separation #covariance btwn parental criminality & par separation
+
+# Average effects per ACE
+Av_maltreatment:=(a1 + b1 + c1 + d1 + e1 + f1 + g1 + h1)/8
+Av_dom_violence:=(a2 + b2 + c2 + d2 + e2 + f2 + g2 + h2)/8
+Av_par_sub:=(a3 + b3 + c3 + d3 + e3 + f3 + g3 + h3)/8
+Av_par_psych:=(a4 + b4 + c4 + d4 + e4 + f4 + g4 + h4)/8
+Av_par_crim:=(a5 + b5 + c5 + d5 + e5 + f5 + g5 + h5)/8
+Av_par_sep:=(a6 + b6 + c6 + d6 + e6 + f6 + g6 + h6)/8
+'
+```
+
+## ABCD - Fit model and run Wald test
+```{r}
+fit_ace_abcd <- lavaan(ace_diffs_model_abcd, data=abcd_CC, estimator = "WLSMV",
+                    ordered=c("maltreatment", "domestic_violence",
+                              "parental_substance", "parental_psychopathology", 
+                              "parental_criminality", "parental_separation"))
+summary(fit_ace_abcd)
+
+## Test whether there are differences across PGSs using Wald test
+p_any <- lavTestWald(fit_ace_abcd, constraints =  c("Av_maltreatment == Av_dom_violence", 
+                                                     "Av_dom_violence == Av_par_sub",
+                                                     "Av_par_sub == Av_par_psych", 
+                                                     "Av_par_psych == Av_par_crim",
+                                                     "Av_par_crim == Av_par_sep"))
+p_any$p.value
+```
+
+## ABCD - Run pairwise comparisons to test whether differences between ACEs fall within the equivalence bounds
+```{r}
+results_aces_abcd <- parameterTable(fit_ace_abcd)
+est <- results_aces_abcd$est[148:153]
+se <- results_aces_abcd$se[148:153]
+ACE <- results_aces_abcd$label[148:153]
+
+ace_data_abcd <- data.frame(ACE, est, se, log_odds = est*1.8, log_se = se*1.8) # Make dataframe including ACE, probit estimate, and probit SE
+# Generate list of ACEs to compare
+combs <- combn(c("maltreatment", "domestic violence", "parental substance abuse",
+                 "parental psychopathology", "parental criminality", "parental separation"), 2)
+pair_combs <- capitalize(as.vector(mapply(paste, sep = " vs. ", combs[c(T,F),], combs[c(F,T),]))) #https://stackoverflow.com/questions/37901142/paste-multiple-rows-together-in-r
+
+# Pairwise log odds differences
+log_odds_combs <- combn(ace_data_abcd$log_odds, 2) # get combinations of log odds ratios between ACEs
+log_odds_diff <- mapply(diffs_odds, log_odds_combs[1,], log_odds_combs[2,])# get differences between ACEs
+
+# Pairwise SE
+se_combs <- combn(ace_data_abcd$log_se, 2)
+se_diff <- mapply(diffs_se, se_combs[1,], se_combs[2,])
+
+# Make dataframe
+ace_diff <- data.frame(pair_combs, log_odds_diff, se_diff)
+# Add 90% CIs
+ace_diff$low_ci <- ace_diff$log_odds_diff - (1.645*se_diff) # 90% low CI
+ace_diff$high_ci <- ace_diff$log_odds_diff + (1.645*se_diff) # 90% upper CI
+
+# make paircombs an ordered factor
+ace_diff$pair_combs <- factor(ace_diff$pair_combs, levels = ace_diff$pair_combs)
+
+# Save to specify data refers to ABCD
+ace_diff_abcd <- ace_diff
+```
+
+## Combine ALSPAC and ABCD figures for differences between ACEs
+```{r}
+dev.off()
+
+# Prepare to save as EPS
+setwd(Figures)
+setEPS(width=6.3, height=9)
+postscript("Hyp1c_CC_ALSPAC_ABCD.eps")
+
+# Set location of where to put plots
+layout(matrix(c(1,1,2,2), 2, 2, byrow = TRUE), widths=c(1,1), heights=c(1,1))
+
+par(mar = c(4, 4, 2, 2))
+
+# Plot ALSPAC results
+forest(ace_diff_alspac$log_odds_diff, ci.lb=ace_diff_alspac$low_ci, ci.ub=ace_diff_alspac$high_ci,
+       subset=order(ace_diff_alspac$pair_combs),cex=0.7,
+       slab=paste(ace_diff_alspac$pair_combs),
+       xlab = "Difference in log odds ratio", cex.axis=0.7,
+       psize=1,
+       xlim=c(-0.25, 0.15),
+       header=c("ACE comparison", "Log odds difference (90% CI)"))
+segments(x0=-0.05, y0=-1, x1=-0.05, y1=16,col="red", lty = 5)
+segments(x0=0.05, y0=-1, x1=0.05, y1=16,col="red", lty = 5)
+
+par(mar = c(4, 4, 2, 2))
+# Plot ABCD results
+forest(ace_diff_abcd$log_odds_diff, ci.lb=ace_diff_abcd$low_ci, ci.ub=ace_diff_abcd$high_ci,
+       subset=order(ace_diff_abcd$pair_combs),cex=0.7,
+       slab=paste(ace_diff_abcd$pair_combs),
+       xlab = "Difference in log odds ratio", cex.axis=0.7,
+       psize=1,
+       xlim=c(-0.25, 0.15),
+       header=c("ACE comparison", "Log odds difference (90% CI)"))
+segments(x0=-0.05, y0=-1, x1=-0.05, y1=16,col="red", lty = 5)
+segments(x0=0.05, y0=-1, x1=0.05, y1=16,col="red", lty = 5)
+
+dev.off()
+```
+
+# Hypothesis 2A 
+
+# ALSPAC - Specify SEM
+```{r}
+multi_PGS_model = 
+  '# Outcome is regressed onto polygenic scores (mediators) and ACE
+    MH ~ b1*ADHD_PGS_r + b2*alcohol_PGS_r + b3*antisocial_PGS_r + b4*anxiety_PGS_r + b5*autism_PGS_r + b6*bipolar_PGS_r + b7*depression_PGS_r + b8*schizophrenia_PGS_r + cp * ACE_1
+    # Polygenic scores are regressed onto ACEs
+    ADHD_PGS_r ~ a1 * ACE_1
+    alcohol_PGS_r ~ a2 * ACE_1
+    antisocial_PGS_r ~ a3 * ACE_1
+    anxiety_PGS_r ~ a4 * ACE_1
+    autism_PGS_r ~ a5 * ACE_1
+    bipolar_PGS_r ~ a6 * ACE_1
+    depression_PGS_r ~ a7 * ACE_1
+    schizophrenia_PGS_r ~ a8 * ACE_1
+    
+    # Covariances between polygenic scores
+    ADHD_PGS_r ~~ cv12*alcohol_PGS_r
+    ADHD_PGS_r ~~ cv13*antisocial_PGS_r
+    ADHD_PGS_r ~~ cv14*anxiety_PGS_r
+    ADHD_PGS_r ~~ cv15*autism_PGS_r
+    ADHD_PGS_r ~~ cv16*bipolar_PGS_r
+    ADHD_PGS_r ~~ cv17*depression_PGS_r
+    ADHD_PGS_r ~~ cv18*schizophrenia_PGS_r
+    alcohol_PGS_r ~~ cv23*antisocial_PGS_r
+    alcohol_PGS_r ~~ cv24*anxiety_PGS_r
+    alcohol_PGS_r ~~ cv25*autism_PGS_r
+    alcohol_PGS_r ~~ cv26*bipolar_PGS_r
+    alcohol_PGS_r ~~ cv27*depression_PGS_r
+    alcohol_PGS_r ~~ cv28*schizophrenia_PGS_r
+    antisocial_PGS_r ~~ cv34*anxiety_PGS_r
+    antisocial_PGS_r ~~ cv35*autism_PGS_r
+    antisocial_PGS_r ~~ cv36*bipolar_PGS_r
+    antisocial_PGS_r ~~ cv37*depression_PGS_r
+    antisocial_PGS_r ~~ cv38*schizophrenia_PGS_r
+    anxiety_PGS_r ~~ cv45*autism_PGS_r
+    anxiety_PGS_r ~~ cv46*bipolar_PGS_r
+    anxiety_PGS_r ~~ cv47*depression_PGS_r
+    anxiety_PGS_r ~~ cv48*schizophrenia_PGS_r
+    autism_PGS_r ~~ cv56*bipolar_PGS_r
+    autism_PGS_r ~~ cv57*depression_PGS_r
+    autism_PGS_r ~~ cv58*schizophrenia_PGS_r
+    bipolar_PGS_r ~~ cv67*depression_PGS_r
+    bipolar_PGS_r ~~ cv68*schizophrenia_PGS_r
+    depression_PGS_r ~~ cv78*schizophrenia_PGS_r
+    
+    # Variances
+    MH ~~ start(1)*MH
+    ADHD_PGS_r ~~ start(1)*ADHD_PGS_r
+    alcohol_PGS_r ~~ start(1)*alcohol_PGS_r
+    antisocial_PGS_r ~~ start(1)*antisocial_PGS_r
+    anxiety_PGS_r ~~ start(1)*anxiety_PGS_r
+    autism_PGS_r ~~ start(1)*autism_PGS_r
+    bipolar_PGS_r ~~ start(1)*bipolar_PGS_r
+    depression_PGS_r ~~ start(1)*depression_PGS_r
+    schizophrenia_PGS_r ~~ start(1)*schizophrenia_PGS_r
+    
+    ## Estimate the indirect effects for each ACE
+    indirect_PGS:= (a1*b1) + (a2*b2) + (a3*b3) + (a4*b4) + (a5*b5) + (a6*b6) + (a7*b7) + (a8*b8)
+    
+    ## Estimate the proportion of the association mediated through the PGS for each ACE
+    prop_PGSs:= ((a1*b1) + (a2*b2) + (a3*b3) + (a4*b4) + (a5*b5) + (a6*b6) + (a7*b7) + (a8*b8))/
+    ((a1*b1) + (a2*b2) + (a3*b3) + (a4*b4) + (a5*b5) + (a6*b6) + (a7*b7) + (a8*b8) + cp)
+    total:=((a1*b1) + (a2*b2) + (a3*b3) + (a4*b4) + (a5*b5) + (a6*b6) + (a7*b7) + (a8*b8) + cp)
+    adjusted:=total-indirect_PGS'
+```
+
+## ALSPAC - Run models for internalising problems 
+```{r}
+# Specify that MH = internalising problems, with sex regressed out
+alspac_CC$MH <- scale(residuals(lm(internalising10 ~ sex, data=alspac_CC, na.action=na.exclude)))
+
+# For each ACE, specify that ACE_1 = the particular ACE
+
+## Maltreatment
+alspac_CC$ACE_1 <- alspac_CC$maltreatment_0_9.5yrs
+fit_int_maltreatment <- lavaan(multi_PGS_model, data=alspac_CC)
+summary(fit_int_maltreatment)
+
+### Domestic violence
+alspac_CC$ACE_1 <- alspac_CC$violence_between_parents_0_9.5yrs
+fit_int_dom_violence <- lavaan(multi_PGS_model, data=alspac_CC)
+summary(fit_int_dom_violence)
+
+### Parental substance abuse
+alspac_CC$ACE_1 <- alspac_CC$substance_household_0_9.5yrs
+fit_int_par_substance <- lavaan(multi_PGS_model, data=alspac_CC)
+summary(fit_int_par_substance)
+
+### Parental psychopathology
+alspac_CC$ACE_1 <- alspac_CC$mental_health_problems_or_suicide_0_9.5yrs
+fit_int_par_psych <- lavaan(multi_PGS_model, data=alspac_CC)
+summary(fit_int_par_psych)
+
+### Parental criminality
+alspac_CC$ACE_1 <- alspac_CC$parent_convicted_offence_0_9.5yrs
+fit_int_par_crim <- lavaan(multi_PGS_model, data=alspac_CC)
+summary(fit_int_par_crim)
+
+### Parental separation
+alspac_CC$ACE_1 <- alspac_CC$parental_separation_0_9.5yrs
+fit_int_par_sep <- lavaan(multi_PGS_model, data=alspac_CC)
+summary(fit_int_par_sep)
+```
+
+## ALSPAC - Define function to extract results
+```{r}
+extract_res <- function(fit_maltreatment, 
+                        fit_dom_violence,
+                        fit_par_psych,
+                        fit_par_substance,
+                        fit_par_crim,
+                        fit_par_sep, 
+                        nrow,
+                        label) {
+  est <- c(parameterEstimates(fit_maltreatment, ci=TRUE)[nrow, 5], 
+              parameterEstimates(fit_dom_violence, ci=TRUE)[nrow, 5], 
+              parameterEstimates(fit_par_psych, ci=TRUE)[nrow, 5],
+              parameterEstimates(fit_par_substance, ci=TRUE)[nrow, 5],
+              parameterEstimates(fit_par_crim, ci=TRUE)[nrow, 5],
+              parameterEstimates(fit_par_sep, ci=TRUE)[nrow, 5])
+  low_ci <- c(parameterEstimates(fit_maltreatment, ci=TRUE)[nrow, 9], 
+              parameterEstimates(fit_dom_violence, ci=TRUE)[nrow, 9], 
+              parameterEstimates(fit_par_psych, ci=TRUE)[nrow, 9],
+              parameterEstimates(fit_par_substance, ci=TRUE)[nrow, 9],
+              parameterEstimates(fit_par_crim, ci=TRUE)[nrow, 9],
+              parameterEstimates(fit_par_sep, ci=TRUE)[nrow, 9])
+  up_ci <- c(parameterEstimates(fit_maltreatment, ci=TRUE)[nrow, 10], 
+              parameterEstimates(fit_dom_violence, ci=TRUE)[nrow, 10], 
+              parameterEstimates(fit_par_psych, ci=TRUE)[nrow, 10],
+              parameterEstimates(fit_par_substance, ci=TRUE)[nrow, 10],
+              parameterEstimates(fit_par_crim, ci=TRUE)[nrow, 10],
+              parameterEstimates(fit_par_sep, ci=TRUE)[nrow, 10])
+  ACE <- c("Maltreatment", "Domestic violence", "Parental mental illness", 
+           "Parental substance abuse", "Parental criminality", "Parental separation")
+  df <- data.frame(ACE, est, low_ci, up_ci)
+  colnames(df)[2:4] <- paste0(label, "_", colnames(df))[2:4] # label columns by the type of result
+  return(df)
+}
+```
+
+## ALSPAC - Extract results for internalising problems into a dataframe
+```{r}
+## Extract results (estimate, low CI, upper CI [plus SE for proportions])
+
+# Proportion explained by polygenic scores
+prop <- extract_res(fit_int_maltreatment, fit_int_dom_violence, fit_int_par_psych,
+                        fit_int_par_substance, fit_int_par_crim, fit_int_par_sep, 57, "prop")
+# Adjusted effect
+adjusted <- extract_res(fit_int_maltreatment, fit_int_dom_violence, fit_int_par_psych,
+                            fit_int_par_substance, fit_int_par_crim, fit_int_par_sep, 59, "adjusted")
+# Genetic confounding
+confound <- extract_res(fit_int_maltreatment, fit_int_dom_violence, fit_int_par_psych,
+                            fit_int_par_substance, fit_int_par_crim, fit_int_par_sep, 56, "confound") 
+# Total effect
+total <- extract_res(fit_int_maltreatment, fit_int_dom_violence, fit_int_par_psych,
+                         fit_int_par_substance, fit_int_par_crim, fit_int_par_sep, 58, "total") 
+# Generate dataframe
+int <- data.frame(prop, total, confound, adjusted)
+int <- subset(int, select = -c(ACE.1, ACE.2, ACE.3)) # drop extra ACE variables
+```
+
+## Aggregate results for proportions explained by polygenic scores 
+```{r}
+int$var <- ((int$prop_up_ci - int$prop_low_ci)/3.92)^2 # get variance
+int$ni <- 4106 # specify sample size
+
+#### Aggregate effect sizes (specify correlations between ACEs as dependency)
+int$id <- 1
+agg_2a <- agg(id=id, es=prop_est, var=var, method = "BHHR", cor = mean_ace_cor_alspac, mod=NULL, data=int) 
+## Extract p-value and other estimates
+est_model <- agg_2a$es
+var_model <- agg_2a$var
+se_model <- sqrt(agg_2a$var)
+lowci_model <- est_model - 1.96*se_model
+upci_model <- est_model + 1.96*se_model
+round((c(est_model, lowci_model, upci_model)),4)*100
+```
+
+## ALSPAC - Run models for externalising problems 
+```{r}
+# Specify that MH = externalising problems, with sex regressed out
+alspac_CC$MH <- scale(residuals(lm(externalising10 ~ sex, data=alspac_CC, na.action=na.exclude)))
+
+# For each ACE, specify that ACE_1 = the particular ACE
+
+## Maltreatment
+alspac_CC$ACE_1 <- alspac_CC$maltreatment_0_9.5yrs
+fit_ext_maltreatment <- lavaan(multi_PGS_model, data=alspac_CC)
+summary(fit_ext_maltreatment)
+
+### Domestic violence
+alspac_CC$ACE_1 <- alspac_CC$violence_between_parents_0_9.5yrs
+fit_ext_dom_violence <- lavaan(multi_PGS_model, data=alspac_CC)
+summary(fit_ext_dom_violence)
+
+### Parental substance abuse
+alspac_CC$ACE_1 <- alspac_CC$substance_household_0_9.5yrs
+fit_ext_par_substance <- lavaan(multi_PGS_model, data=alspac_CC)
+summary(fit_ext_par_substance)
+
+### Parental psychopathology
+alspac_CC$ACE_1 <- alspac_CC$mental_health_problems_or_suicide_0_9.5yrs
+fit_ext_par_psych <- lavaan(multi_PGS_model, data=alspac_CC)
+summary(fit_ext_par_psych)
+
+### Parental criminality
+alspac_CC$ACE_1 <- alspac_CC$parent_convicted_offence_0_9.5yrs
+fit_ext_par_crim <- lavaan(multi_PGS_model, data=alspac_CC)
+summary(fit_ext_par_crim)
+
+### Parental separation
+alspac_CC$ACE_1 <- alspac_CC$parental_separation_0_9.5yrs
+fit_ext_par_sep <- lavaan(multi_PGS_model, data=alspac_CC)
+summary(fit_ext_par_sep)
+```
+
+## ALSPAC - Extract results for externalising problems into a dataframe
+```{r}
+## Extract results (estimate, low CI, upper CI [plus SE for proportions])
+
+# Proportion explained by polygenic scores
+prop <- extract_res(fit_ext_maltreatment, fit_ext_dom_violence, fit_ext_par_psych,
+                        fit_ext_par_substance, fit_ext_par_crim, fit_ext_par_sep, 57, "prop")
+# Adjusted effect
+adjusted <- extract_res(fit_ext_maltreatment, fit_ext_dom_violence, fit_ext_par_psych,
+                            fit_ext_par_substance, fit_ext_par_crim, fit_ext_par_sep, 59, "adjusted")
+# Genetic confounding
+confound <- extract_res(fit_ext_maltreatment, fit_ext_dom_violence, fit_ext_par_psych,
+                            fit_ext_par_substance, fit_ext_par_crim, fit_ext_par_sep, 56, "confound") 
+# Total effect
+total <- extract_res(fit_ext_maltreatment, fit_ext_dom_violence, fit_ext_par_psych,
+                         fit_ext_par_substance, fit_ext_par_crim, fit_ext_par_sep, 58, "total") 
+# Generate dataframe
+ext <- data.frame(prop, total, confound, adjusted)
+ext <- subset(ext, select = -c(ACE.1, ACE.2, ACE.3)) # drop extra ACE variables
+```
+
+## Aggregate results for proportions explained by polygenic scores 
+```{r}
+ext$var <- ((ext$prop_up_ci - ext$prop_low_ci)/3.92)^2 # get variance
+ext$ni <- 4106 # sample size
+
+#### Aggregate effect sizes (specify dependency equals the mean correlation between ACEs)
+ext$id <- 1
+agg_2a <- agg(id=id, es=prop_est, var=var, method = "BHHR", cor = mean_ace_cor_alspac,  data=ext) 
+## Get p-value and other estimates
+est_model <- agg_2a$es
+var_model <- agg_2a$var
+se_model <- sqrt(agg_2a$var)
+lowci_model <- est_model - 1.96*se_model
+upci_model <- est_model + 1.96*se_model
+round((c(est_model, lowci_model, upci_model)),4)*100
+```
+
+## ALSPAC - Convert cohen's d values to r for table
+```{r}
+# Define function to combine effect estimates and CIs into a single cell
+paste_res <- function(est, lowCI, upCI) {
+  combined <- paste0(format(round(est, 3), nsmall=3), " (", format(round(lowCI, 3), nsmall=3, trim=TRUE),"-", format(round(upCI, 3), nsmall=3), ")" )
+  return(combined)
+}
+
+# Bind dataframes with results for internalising and externalising problems
+int_ext <- rbind(int, ext)
+
+# Add column specifying whether the outcome is internalising or externalising problems
+int_ext$outcome <- c(rep("internalising", 6), rep("externalising", 6))
+
+### Convert Cohen's d to r and show results in table
+d_to_r <- function(d, N1, N2) {
+  a <- (N1 + N2)^2 /(N1*N2)
+  r <- d / sqrt(d^2 + a)
+  return(r)
+}
+
+# Add columns to tables with N_exposed (N1) and N_unexposed (N2) for that particular ACE
+# this is needed to convert cohen's d values to correlation coefficients
+int_ext$N1 <- NA
+int_ext$N1[int_ext$ACE=="Maltreatment"] <- table(alspac_CC$maltreatment_0_9.5yrs)[2]
+int_ext$N1[int_ext$ACE=="Domestic violence"] <- table(alspac_CC$violence_between_parents_0_9.5yrs)[2]
+int_ext$N1[int_ext$ACE=="Parental mental illness"] <- table(alspac_CC$mental_health_problems_or_suicide_0_9.5yrs)[2]
+int_ext$N1[int_ext$ACE=="Parental substance abuse"] <- table(alspac_CC$substance_household_0_9.5yrs)[2]
+int_ext$N1[int_ext$ACE=="Parental criminality"] <- table(alspac_CC$parent_convicted_offence_0_9.5yrs)[2]
+int_ext$N1[int_ext$ACE=="Parental separation"] <- table(alspac_CC$parental_separation_0_9.5yrs)[2]
+int_ext$N2 <- NA
+int_ext$N2[int_ext$ACE=="Maltreatment"] <- table(alspac_CC$maltreatment_0_9.5yrs)[1]
+int_ext$N2[int_ext$ACE=="Domestic violence"] <- table(alspac_CC$violence_between_parents_0_9.5yrs)[1]
+int_ext$N2[int_ext$ACE=="Parental mental illness"] <- table(alspac_CC$mental_health_problems_or_suicide_0_9.5yrs)[1]
+int_ext$N2[int_ext$ACE=="Parental substance abuse"] <- table(alspac_CC$substance_household_0_9.5yrs)[1]
+int_ext$N2[int_ext$ACE=="Parental criminality"] <- table(alspac_CC$parent_convicted_offence_0_9.5yrs)[1]
+int_ext$N2[int_ext$ACE=="Parental separation"] <- table(alspac_CC$parental_separation_0_9.5yrs)[1]
+
+# Convert d to r for total association
+int_ext$total_est_r <- NA
+int_ext$total_est_r <- d_to_r(int_ext$total_est, int_ext$N1, int_ext$N2)
+# Convert d to r for adjusted association
+int_ext$adjusted_est_r <- NA
+int_ext$adjusted_est_r <- d_to_r(int_ext$adjusted_est, int_ext$N1, int_ext$N2)
+# Convert d to r for genetic confounding
+int_ext$confound_est_r <- NA
+int_ext$confound_est_r <- d_to_r(int_ext$confound_est, int_ext$N1, int_ext$N2)
+
+### Convert Cohen's d variance to r and show results in table
+var_d_to_var_r <- function(var_d, d, N1, N2) {
+  a <- (N1 + N2)^2 /(N1*N2)
+  var_r <- (a^2 * var_d) / (d^2 + a)^3
+  return(var_r)
+}
+
+## Get variance and CIs of total association
+int_ext$total_var <- ((int_ext$total_up_ci - int_ext$total_low_ci)/3.92)^2
+int_ext$total_var_r <- var_d_to_var_r(int_ext$total_var, int_ext$total_est, int_ext$N1, int_ext$N2)
+int_ext$total_se_r <- sqrt(int_ext$total_var_r)
+int_ext$total_low_ci_r <- int_ext$total_est_r  - 1.96*int_ext$total_se_r
+int_ext$total_up_ci_r <- int_ext$total_est_r  + 1.96*int_ext$total_se_r
+## Get variance and CIs of adjusted association
+int_ext$adjusted_var <- ((int_ext$adjusted_up_ci - int_ext$adjusted_low_ci)/3.92)^2
+int_ext$adjusted_var_r <- var_d_to_var_r(int_ext$adjusted_var, int_ext$adjusted_est, int_ext$N1, int_ext$N2)
+int_ext$adjusted_se_r <- sqrt(int_ext$adjusted_var_r)
+int_ext$adjusted_low_ci_r <- int_ext$adjusted_est_r  - 1.96*int_ext$adjusted_se_r
+int_ext$adjusted_up_ci_r <- int_ext$adjusted_est_r  + 1.96*int_ext$adjusted_se_r
+## Get variance and CIs of genetically confounded association
+int_ext$confound_var <- ((int_ext$confound_up_ci - int_ext$confound_low_ci)/3.92)^2
+int_ext$confound_var_r <- var_d_to_var_r(int_ext$confound_var, int_ext$confound_est, int_ext$N1, int_ext$N2)
+int_ext$confound_se_r <- sqrt(int_ext$confound_var_r)
+int_ext$confound_low_ci_r <- int_ext$confound_est_r  - 1.96*int_ext$confound_se_r
+int_ext$confound_up_ci_r <- int_ext$confound_est_r  + 1.96*int_ext$confound_se_r
+
+table_r <- int_ext
+
+numeric_cols <- c("adjusted_est_r", "adjusted_low_ci_r", "adjusted_up_ci_r", 
+                  "confound_est_r", "confound_low_ci_r", "confound_up_ci_r",
+                  "total_est_r", "total_low_ci_r", "total_up_ci_r")
+table_r[numeric_cols] <- lapply(table_r[numeric_cols], function(x) as.numeric(as.character(x)))
+
+# Combine effect estimates and CIs into a single column
+table_r$Adjusted <- paste_res(table_r$adjusted_est_r, table_r$adjusted_low_ci_r, table_r$adjusted_up_ci_r)
+table_r$GeneticConfounding <- paste_res(table_r$confound_est_r, table_r$confound_low_ci_r, table_r$confound_up_ci_r)
+table_r$Total <- paste_res(table_r$total_est_r, table_r$total_low_ci_r, table_r$total_up_ci_r)
+table_r$Proportion <- paste_res(table_r$prop_est, table_r$prop_low_ci, table_r$prop_up_ci)
+
+# subset to variables for table
+table_r <- table_r[,c("ACE", "Total", "Adjusted", "GeneticConfounding", "Proportion")]
+
+# Specify table refers to alspac
+table_r_alspac <- table_r
+observed_pgs_alspac <- int_ext
+```
+
+```{r}
+# Remove objects for ALSPAC
+rm(ace_data, ace_data_abcd, ace_diff, ace_diff_abcd, ace_diff_alspac, adjusted, 
+  combs, confound, ext, fit_ace_abcd, fit_ext_maltreatment, fit_ext_dom_violence,  fit_ext_par_psych,
+   fit_ext_par_substance, fit_ext_par_crim, fit_ext_par_sep, 
+   fit_int_maltreatment, fit_int_dom_violence,  fit_int_par_psych,
+   fit_int_par_substance, fit_int_par_crim, fit_int_par_sep,
+   int_ext, long_results, nc_results, int, p_any, prop, total, fit.mi.ace, agg_21, lowci_model, numeric_cols,
+  results_aces_abcd, upci_model)
+```
+
+# ABCD - Specify SEM
+```{r}
+multi_PGS_model_abcd = 
+  '# Outcome is regressed onto polygenic scores (mediators) and ACE
+    MH ~ b1*ADHD_PGS_r + b2*alcohol_PGS_r + b3*antisocial_PGS_r + b4*anxiety_PGS_r + b5*autism_PGS_r + b6*bipolar_PGS_r + b7*depression_PGS_r + b8*schizophrenia_PGS_r + cp * ACE_1
+    # Polygenic scores are regressed onto ACEs
+    ADHD_PGS_r ~ a1 * ACE_1
+    alcohol_PGS_r ~ a2 * ACE_1
+    antisocial_PGS_r ~ a3 * ACE_1
+    anxiety_PGS_r ~ a4 * ACE_1
+    autism_PGS_r ~ a5 * ACE_1
+    bipolar_PGS_r ~ a6 * ACE_1
+    depression_PGS_r ~ a7 * ACE_1
+    schizophrenia_PGS_r ~ a8 * ACE_1
+    
+    # Covariances between polygenic scores
+    ADHD_PGS_r ~~ cv12*alcohol_PGS_r
+    ADHD_PGS_r ~~ cv13*antisocial_PGS_r
+    ADHD_PGS_r ~~ cv14*anxiety_PGS_r
+    ADHD_PGS_r ~~ cv15*autism_PGS_r
+    ADHD_PGS_r ~~ cv16*bipolar_PGS_r
+    ADHD_PGS_r ~~ cv17*depression_PGS_r
+    ADHD_PGS_r ~~ cv18*schizophrenia_PGS_r
+    alcohol_PGS_r ~~ cv23*antisocial_PGS_r
+    alcohol_PGS_r ~~ cv24*anxiety_PGS_r
+    alcohol_PGS_r ~~ cv25*autism_PGS_r
+    alcohol_PGS_r ~~ cv26*bipolar_PGS_r
+    alcohol_PGS_r ~~ cv27*depression_PGS_r
+    alcohol_PGS_r ~~ cv28*schizophrenia_PGS_r
+    antisocial_PGS_r ~~ cv34*anxiety_PGS_r
+    antisocial_PGS_r ~~ cv35*autism_PGS_r
+    antisocial_PGS_r ~~ cv36*bipolar_PGS_r
+    antisocial_PGS_r ~~ cv37*depression_PGS_r
+    antisocial_PGS_r ~~ cv38*schizophrenia_PGS_r
+    anxiety_PGS_r ~~ cv45*autism_PGS_r
+    anxiety_PGS_r ~~ cv46*bipolar_PGS_r
+    anxiety_PGS_r ~~ cv47*depression_PGS_r
+    anxiety_PGS_r ~~ cv48*schizophrenia_PGS_r
+    autism_PGS_r ~~ cv56*bipolar_PGS_r
+    autism_PGS_r ~~ cv57*depression_PGS_r
+    autism_PGS_r ~~ cv58*schizophrenia_PGS_r
+    bipolar_PGS_r ~~ cv67*depression_PGS_r
+    bipolar_PGS_r ~~ cv68*schizophrenia_PGS_r
+    depression_PGS_r ~~ cv78*schizophrenia_PGS_r
+    
+    # Variances
+    MH ~~ start(1)*MH
+    ADHD_PGS_r ~~ start(1)*ADHD_PGS_r
+    alcohol_PGS_r ~~ start(1)*alcohol_PGS_r
+    antisocial_PGS_r ~~ start(1)*antisocial_PGS_r
+    anxiety_PGS_r ~~ start(1)*anxiety_PGS_r
+    autism_PGS_r ~~ start(1)*autism_PGS_r
+    bipolar_PGS_r ~~ start(1)*bipolar_PGS_r
+    depression_PGS_r ~~ start(1)*depression_PGS_r
+    schizophrenia_PGS_r ~~ start(1)*schizophrenia_PGS_r
+    
+    ## Estimate the indirect effects for each ACE
+    indirect_PGS:= (a1*b1) + (a2*b2) + (a3*b3) + (a4*b4) + (a5*b5) + (a6*b6) + (a7*b7) + (a8*b8)
+    
+    ## Estimate the proportion of the association mediated through the PGS for each ACE
+    prop_PGSs:= ((a1*b1) + (a2*b2) + (a3*b3) + (a4*b4) + (a5*b5) + (a6*b6) + (a7*b7) + (a8*b8))/
+    ((a1*b1) + (a2*b2) + (a3*b3) + (a4*b4) + (a5*b5) + (a6*b6) + (a7*b7) + (a8*b8) + cp)
+    total:=((a1*b1) + (a2*b2) + (a3*b3) + (a4*b4) + (a5*b5) + (a6*b6) + (a7*b7) + (a8*b8) + cp)
+    adjusted:=total-indirect_PGS'
+```
+
+## ABCD - Run models for internalising problems 
+```{r}
+# Specify that MH = internalising problems, with sex regressed out
+abcd_CC$MH <- scale(residuals(lm(cbcl_internalising ~ sex, data=abcd_CC, na.action=na.exclude)))
+
+# For each ACE, specify that ACE_1 = the particular ACE
+
+## Maltreatment
+abcd_CC$ACE_1 <- abcd_CC$maltreatment
+fit_int_maltreatment <- lavaan(multi_PGS_model, data=abcd_CC)
+summary(fit_int_maltreatment)
+
+### Domestic violence
+abcd_CC$ACE_1 <- abcd_CC$domestic_violence
+fit_int_dom_violence <- lavaan(multi_PGS_model, data=abcd_CC)
+summary(fit_int_dom_violence)
+
+### Parental psychopathology
+abcd_CC$ACE_1 <- abcd_CC$parental_psychopathology
+fit_int_par_psych <- lavaan(multi_PGS_model, data=abcd_CC)
+summary(fit_int_par_psych)
+
+### Parental substance abuse
+abcd_CC$ACE_1 <- abcd_CC$parental_substance
+fit_int_par_substance <- lavaan(multi_PGS_model, data=abcd_CC)
+summary(fit_int_par_substance)
+
+### Parental criminality
+abcd_CC$ACE_1 <- abcd_CC$parental_criminality
+fit_int_par_crim <- lavaan(multi_PGS_model, data=abcd_CC)
+summary(fit_int_par_crim)
+
+### Parental separation
+abcd_CC$ACE_1 <- abcd_CC$parental_separation
+fit_int_par_sep <- lavaan(multi_PGS_model, data=abcd_CC)
+summary(fit_int_par_sep)
+```
+
+## ABCD - Extract results for internalising problems into a dataframe
+```{r}
+## Extract results (estimate, low CI, upper CI [plus SE for proportions])
+
+# Proportion explained by polygenic scores
+prop <- extract_res(fit_int_maltreatment, fit_int_dom_violence, fit_int_par_psych,
+                        fit_int_par_substance, fit_int_par_crim, fit_int_par_sep, 57, "prop")
+# Adjusted effect
+adjusted <- extract_res(fit_int_maltreatment, fit_int_dom_violence, fit_int_par_psych,
+                            fit_int_par_substance, fit_int_par_crim, fit_int_par_sep, 59, "adjusted")
+# Genetic confounding
+confound <- extract_res(fit_int_maltreatment, fit_int_dom_violence, fit_int_par_psych,
+                            fit_int_par_substance, fit_int_par_crim, fit_int_par_sep, 56, "confound") 
+# Total effect
+total <- extract_res(fit_int_maltreatment, fit_int_dom_violence, fit_int_par_psych,
+                         fit_int_par_substance, fit_int_par_crim, fit_int_par_sep, 58, "total") 
+# Generate dataframe
+int <- data.frame(prop, total, confound, adjusted)
+int <- subset(int, select = -c(ACE.1, ACE.2, ACE.3)) # drop extra ACE variables
+```
+
+## ABCD - Aggregate results for proportions explained by polygenic scores 
+```{r}
+int$var <- ((int$prop_up_ci - int$prop_low_ci)/3.92)^2 # get variance
+int$ni <- 4662 # specify sample size
+
+## Aggregate effect sizes 
+agg_2a <- agg(id=id, es=prop_est, var=var, method = "BHHR", cor = mean_ace_cor_abcd, mod=NULL, data=int) 
+## Extract p-value and other estimates
+est_model <- agg_2a$es
+var_model <- agg_2a$var
+se_model <- sqrt(agg_2a$var)
+lowci_model <- est_model - 1.96*se_model
+upci_model <- est_model + 1.96*se_model
+round((c(est_model, lowci_model, upci_model)),4)*100
+
+# Save results
+hyp2a_int_abcd <- int
+```
+
+## ABCD - Run models for externalising problems 
+```{r}
+# Specify that MH = internalising problems, with sex regressed out
+abcd_CC$MH <- scale(residuals(lm(cbcl_externalising ~ sex, data=abcd_CC, na.action=na.exclude)))
+
+# For each ACE, specify that ACE_1 = the particular ACE
+
+## Maltreatment
+abcd_CC$ACE_1 <- abcd_CC$maltreatment
+fit_ext_maltreatment <- lavaan(multi_PGS_model, data=abcd_CC)
+summary(fit_ext_maltreatment)
+
+### Domestic violence
+abcd_CC$ACE_1 <- abcd_CC$domestic_violence
+fit_ext_dom_violence <- lavaan(multi_PGS_model, data=abcd_CC)
+summary(fit_ext_dom_violence)
+
+### Parental psychopathology
+abcd_CC$ACE_1 <- abcd_CC$parental_psychopathology
+fit_ext_par_psych <- lavaan(multi_PGS_model, data=abcd_CC)
+summary(fit_ext_par_psych)
+
+### Parental substance abuse
+abcd_CC$ACE_1 <- abcd_CC$parental_substance
+fit_ext_par_substance <- lavaan(multi_PGS_model, data=abcd_CC)
+summary(fit_ext_par_substance)
+
+### Parental criminality
+abcd_CC$ACE_1 <- abcd_CC$parental_criminality
+fit_ext_par_crim <- lavaan(multi_PGS_model, data=abcd_CC)
+summary(fit_ext_par_crim)
+
+### Parental separation
+abcd_CC$ACE_1 <- abcd_CC$parental_separation
+fit_ext_par_sep <- lavaan(multi_PGS_model, data=abcd_CC)
+summary(fit_ext_par_sep)
+```
+
+## ALSPAC - Extract results for externalising problems into a dataframe
+```{r}
+## Extract results (estimate, low CI, upper CI [plus SE for proportions])
+
+# Proportion explained by polygenic scores
+prop <- extract_res(fit_ext_maltreatment, fit_ext_dom_violence, fit_ext_par_psych,
+                        fit_ext_par_substance, fit_ext_par_crim, fit_ext_par_sep, 57, "prop")
+# Adjusted effect
+adjusted <- extract_res(fit_ext_maltreatment, fit_ext_dom_violence, fit_ext_par_psych,
+                            fit_ext_par_substance, fit_ext_par_crim, fit_ext_par_sep, 59, "adjusted")
+# Genetic confounding
+confound <- extract_res(fit_ext_maltreatment, fit_ext_dom_violence, fit_ext_par_psych,
+                            fit_ext_par_substance, fit_ext_par_crim, fit_ext_par_sep, 56, "confound") 
+# Total effect
+total <- extract_res(fit_ext_maltreatment, fit_ext_dom_violence, fit_ext_par_psych,
+                         fit_ext_par_substance, fit_ext_par_crim, fit_ext_par_sep, 58, "total") 
+# Generate dataframe
+ext <- data.frame(prop, total, confound, adjusted)
+ext <- subset(ext, select = -c(ACE.1, ACE.2, ACE.3)) # drop extra ACE variables
+```
+
+## ABCD - Aggregate results for proportions explained by polygenic scores 
+```{r}
+ext$var <- ((ext$prop_up_ci - ext$prop_low_ci)/3.92)^2 # get variance
+ext$ni <- 4662 # sample size
+
+#### Aggregate effect sizes (specify dependency equals the mean correlation between ACEs)
+ext$id <- 1
+agg_2a <- agg(id=id, es=prop_est, var=var, method = "BHHR", cor = mean_ace_cor_abcd, mod=NULL, data=ext) 
+## Get p-value and other estimates
+est_model <- agg_2a$es
+var_model <- agg_2a$var
+se_model <- sqrt(agg_2a$var)
+lowci_model <- est_model - 1.96*se_model
+upci_model <- est_model + 1.96*se_model
+round((c(est_model, lowci_model, upci_model)),4)*100
+
+# Save results
+hyp2a_ext_abcd <- ext
+```
+
+## ABCD - Convert cohen's d values to r for table
+```{r}
+# Combine internalising and externalising into one dataframe
+int_ext <- rbind(int, ext)
+
+# Specify outcome
+int_ext$outcome <- c(rep("internalising", 6), rep("externalising", 6))
+
+# Add columns to tables with N_exposed (N1) and N_unexposed (N2) for that particular ACE
+int_ext$N1 <- NA
+int_ext$N1[int_ext$ACE=="Maltreatment"] <- table(abcd_CC$maltreatment)[2]
+int_ext$N1[int_ext$ACE=="Domestic violence"] <- table(abcd_CC$domestic_violence)[2]
+int_ext$N1[int_ext$ACE=="Parental mental illness"] <- table(abcd_CC$parental_psychopathology)[2]
+int_ext$N1[int_ext$ACE=="Parental substance abuse"] <- table(abcd_CC$parental_substance)[2]
+int_ext$N1[int_ext$ACE=="Parental criminality"] <- table(abcd_CC$parental_criminality)[2]
+int_ext$N1[int_ext$ACE=="Parental separation"] <- table(abcd_CC$parental_separation)[2]
+int_ext$N2 <- NA
+int_ext$N2[int_ext$ACE=="Maltreatment"] <- table(abcd_CC$maltreatment)[1]
+int_ext$N2[int_ext$ACE=="Domestic violence"] <- table(abcd_CC$domestic_violence)[1]
+int_ext$N2[int_ext$ACE=="Parental mental illness"] <- table(abcd_CC$parental_psychopathology)[1]
+int_ext$N2[int_ext$ACE=="Parental substance abuse"] <- table(abcd_CC$parental_substance)[1]
+int_ext$N2[int_ext$ACE=="Parental criminality"] <- table(abcd_CC$parental_criminality)[1]
+int_ext$N2[int_ext$ACE=="Parental separation"] <- table(abcd_CC$parental_separation)[1]
+
+# Convert d to r for total association
+int_ext$total_est_r <- NA
+int_ext$total_est_r <- d_to_r(int_ext$total_est, int_ext$N1, int_ext$N2)
+# Convert d to r for adjusted association
+int_ext$adjusted_est_r <- NA
+int_ext$adjusted_est_r <- d_to_r(int_ext$adjusted_est, int_ext$N1, int_ext$N2)
+# Convert d to r for genetic confounding
+int_ext$confound_est_r <- NA
+int_ext$confound_est_r <- d_to_r(int_ext$confound_est, int_ext$N1, int_ext$N2)
+
+## Get variance and CIs of total association
+int_ext$total_var <- ((int_ext$total_up_ci - int_ext$total_low_ci)/3.92)^2
+int_ext$total_var_r <- var_d_to_var_r(int_ext$total_var, int_ext$total_est, int_ext$N1, int_ext$N2)
+int_ext$total_se_r <- sqrt(int_ext$total_var_r)
+int_ext$total_low_ci_r <- int_ext$total_est_r  - 1.96*int_ext$total_se_r
+int_ext$total_up_ci_r <- int_ext$total_est_r  + 1.96*int_ext$total_se_r
+## Get variance and CIs of adjusted association
+int_ext$adjusted_var <- ((int_ext$adjusted_up_ci - int_ext$adjusted_low_ci)/3.92)^2
+int_ext$adjusted_var_r <- var_d_to_var_r(int_ext$adjusted_var, int_ext$adjusted_est, int_ext$N1, int_ext$N2)
+int_ext$adjusted_se_r <- sqrt(int_ext$adjusted_var_r)
+int_ext$adjusted_low_ci_r <- int_ext$adjusted_est_r  - 1.96*int_ext$adjusted_se_r
+int_ext$adjusted_up_ci_r <- int_ext$adjusted_est_r  + 1.96*int_ext$adjusted_se_r
+## Get variance and CIs of genetically confounded association
+int_ext$confound_var <- ((int_ext$confound_up_ci - int_ext$confound_low_ci)/3.92)^2
+int_ext$confound_var_r <- var_d_to_var_r(int_ext$confound_var, int_ext$confound_est, int_ext$N1, int_ext$N2)
+int_ext$confound_se_r <- sqrt(int_ext$confound_var_r)
+int_ext$confound_low_ci_r <- int_ext$confound_est_r  - 1.96*int_ext$confound_se_r
+int_ext$confound_up_ci_r <- int_ext$confound_est_r  + 1.96*int_ext$confound_se_r
+
+table_r <- int_ext
+
+numeric_cols <- c("adjusted_est_r", "adjusted_low_ci_r", "adjusted_up_ci_r", 
+                  "confound_est_r", "confound_low_ci_r", "confound_up_ci_r",
+                  "total_est_r", "total_low_ci_r", "total_up_ci_r")
+table_r[numeric_cols] <- lapply(table_r[numeric_cols], function(x) as.numeric(as.character(x)))
+
+# Combine estimate and 95% CIs in a single column
+table_r$Adjusted <- paste_res(table_r$adjusted_est_r, table_r$adjusted_low_ci_r, table_r$adjusted_up_ci_r)
+table_r$GeneticConfounding <- paste_res(table_r$confound_est_r, table_r$confound_low_ci_r, table_r$confound_up_ci_r)
+table_r$Total <- paste_res(table_r$total_est_r, table_r$total_low_ci_r, table_r$total_up_ci_r)
+table_r$Proportion <- paste_res(table_r$prop_est, table_r$prop_low_ci, table_r$prop_up_ci)
+
+# subset to variables for table
+table_r <- table_r[,c("ACE", "Total", "Adjusted", "GeneticConfounding", "Proportion")]
+
+# Specify table refers to abcd
+table_r_abcd <- table_r
+observed_pgs_abcd <- int_ext
+```
+
+## ALSPAC and ABCD - make table with results for observed polygenic scores (Hypothesis 2A)
+```{r}
+table_r <- cbind(table_r_alspac, table_r_abcd[,-1]) # bind tables but remove ACE column in ABCD
+
+kable(table_r, col.names = c("", "Total association", "Adjusted association", "Genetic confounding", 
+                             "Prop.\ngenetically confounded", 
+                             "Total association", "Adjusted association", "Genetic confounding", 
+                             "Prop.\ngenetically confounded")) %>% 
+  kable_styling(font_size = 13) %>%
+  #column_spec(1, width="20em", color="black", include_thead = T) %>%
+  #column_spec(2:5, width="15em",  color="black", include_thead = T) %>%
+  pack_rows("Internalising problems", 1, 6, label_row_css = "color:black") %>%
+  pack_rows("Externalising problems", 7, 12, label_row_css = "color:black") %>%
+  add_header_above(c(" ", "ALSPAC" = 4, "ABCD" = 4))
+```
+
+### ALSPAC - Repeat analysis for negative control polygenic scores
+```{r}
+# Specify lavaan model
+NC_PGS_model =  '
+  # Outcome is regressed onto mediators and ACEs
+  MH ~ b1*cataracts_PGS_r + b2*handedness_PGS_r + cp * ACE_1
+  # Mediators are regressed onto ACEs
+  cataracts_PGS_r ~ a1 * ACE_1
+  handedness_PGS_r ~ a2 * ACE_1
+  # Covariance between PGSs
+  cataracts_PGS_r ~~ cv12*handedness_PGS_r
+  # Variances
+  MH ~~ start(1)*MH
+  cataracts_PGS_r ~~ start(1)*cataracts_PGS_r
+  handedness_PGS_r ~~ start(1)*handedness_PGS_r
+  
+  ## Estimate the indirect effects for each ACE
+  indirect_PGS:= (a1*b1) + (a2*b2)
+  
+  ## Estimate the proportion of the association mediated through the PGS for each ACE
+  prop_PGSs:= ((a1*b1) + (a2*b2)) /  ((a1*b1) + (a2*b2) + cp)
+  total:= ((a1*b1) + (a2*b2) + cp)
+  adjusted:= total-indirect_PGS '
+```
+
+### ALSPAC - Run models for negative controls and internalising problems 
+```{r}
+# Specify that MH = internalising problems, with sex regressed out
+alspac_CC$MH <- scale(residuals(lm(internalising10 ~ sex, data=alspac_CC, na.action=na.exclude)))
+
+# For each ACE, specify that ACE_1 = the particular ACE
+
+## Maltreatment
+alspac_CC$ACE_1 <- alspac_CC$maltreatment_0_9.5yrs
+nc_int_maltreatment <- lavaan(NC_PGS_model, data=alspac_CC)
+summary(nc_int_maltreatment)
+
+### Domestic violence
+alspac_CC$ACE_1 <- alspac_CC$violence_between_parents_0_9.5yrs
+nc_int_dom_violence <- lavaan(NC_PGS_model, data=alspac_CC)
+summary(nc_int_dom_violence)
+
+### Parental substance abuse
+alspac_CC$ACE_1 <- alspac_CC$substance_household_0_9.5yrs
+nc_int_par_substance <- lavaan(NC_PGS_model, data=alspac_CC)
+summary(nc_int_par_substance)
+
+### Parental psychopathology
+alspac_CC$ACE_1 <- alspac_CC$mental_health_problems_or_suicide_0_9.5yrs
+nc_int_par_psych <- lavaan(NC_PGS_model, data=alspac_CC)
+summary(nc_int_par_psych)
+
+### Parental criminality
+alspac_CC$ACE_1 <- alspac_CC$parent_convicted_offence_0_9.5yrs
+nc_int_par_crim <- lavaan(NC_PGS_model, data=alspac_CC)
+summary(nc_int_par_crim)
+
+### Parental separation
+alspac_CC$ACE_1 <- alspac_CC$parental_separation_0_9.5yrs
+nc_int_par_sep <- lavaan(NC_PGS_model, data=alspac_CC)
+summary(nc_int_par_sep)
+
+##### Pool results for internalising problems
+
+# Proportion explained by polygenic scores
+prop <- extract_res(nc_int_maltreatment, nc_int_dom_violence, nc_int_par_psych,
+                        nc_int_par_substance, nc_int_par_crim, nc_int_par_sep, 12, "prop")
+# Adjusted effect
+adjusted <- extract_res(nc_int_maltreatment, nc_int_dom_violence, nc_int_par_psych,
+                            nc_int_par_substance, nc_int_par_crim, nc_int_par_sep, 14, "adjusted")
+# Genetic confounding
+confound <- extract_res(nc_int_maltreatment, nc_int_dom_violence, nc_int_par_psych,
+                            nc_int_par_substance, nc_int_par_crim, nc_int_par_sep, 11, "confound") 
+# Total effect
+total <- extract_res(nc_int_maltreatment, nc_int_dom_violence, nc_int_par_psych,
+                         nc_int_par_substance, nc_int_par_crim, nc_int_par_sep, 13, "total") 
+# Generate dataframe
+nc_int <- data.frame(prop, total, confound, adjusted)
+nc_int <- subset(nc_int, select = -c(ACE.1, ACE.2, ACE.3)) # drop extra ACE variables
+```
+
+### ALSPAC - Aggregate results for proportions of associations with internalising problems explained by negative control polygenic scores 
+```{r}
+nc_int$var <- ((nc_int$prop_up_ci - nc_int$prop_low_ci)/3.92)^2 # get variance
+nc_int$ni <- 4106 # sample size
+
+
+#### Aggregate effect sizes (specify cor=0.3 due to correlations between ACEs)
+nc_int$id <- 1
+agg_2a <- agg(id=id, es=prop_est, var=var, method = "BHHR", cor = mean_ace_cor_alspac, mod=NULL, data=nc_int) 
+## Get p-value and other estimates
+est_model <- agg_2a$es
+var_model <- agg_2a$var
+se_model <- sqrt(agg_2a$var)
+lowci_model <- est_model - 1.96*se_model
+upci_model <- est_model + 1.96*se_model
+round((c(est_model, lowci_model, upci_model)),4)*100
+p <- 2*pnorm(-abs(est_model/se_model) )
+p
+```
+
+### ALSPAC - Run models for negative controls and externalising problems 
+```{r}
+# Specify that MH = externalising problems, with sex regressed out
+alspac_CC$MH <- scale(residuals(lm(externalising10 ~ sex, data=alspac_CC, na.action=na.exclude)))
+
+# For each ACE, specify that ACE_1 = the particular ACE
+
+## Maltreatment
+alspac_CC$ACE_1 <- alspac_CC$maltreatment_0_9.5yrs
+nc_ext_maltreatment <- lavaan(NC_PGS_model, data=alspac_CC)
+summary(nc_ext_maltreatment)
+
+### Domestic violence
+alspac_CC$ACE_1 <- alspac_CC$violence_between_parents_0_9.5yrs
+nc_ext_dom_violence <- lavaan(NC_PGS_model, data=alspac_CC)
+summary(nc_ext_dom_violence)
+
+### Parental substance abuse
+alspac_CC$ACE_1 <- alspac_CC$substance_household_0_9.5yrs
+nc_ext_par_substance <- lavaan(NC_PGS_model, data=alspac_CC)
+summary(nc_ext_par_substance)
+
+### Parental psychopathology
+alspac_CC$ACE_1 <- alspac_CC$mental_health_problems_or_suicide_0_9.5yrs
+nc_ext_par_psych <- lavaan(NC_PGS_model, data=alspac_CC)
+summary(nc_ext_par_psych)
+
+### Parental criminality
+alspac_CC$ACE_1 <- alspac_CC$parent_convicted_offence_0_9.5yrs
+nc_ext_par_crim <- lavaan(NC_PGS_model, data=alspac_CC)
+summary(nc_ext_par_crim)
+
+### Parental separation
+alspac_CC$ACE_1 <- alspac_CC$parental_separation_0_9.5yrs
+nc_ext_par_sep <- lavaan(NC_PGS_model, data=alspac_CC)
+summary(nc_ext_par_sep)
+
+##### Pool results for externalising problems
+
+# Proportion explained by polygenic scores
+prop <- extract_res(nc_ext_maltreatment, nc_ext_dom_violence, nc_ext_par_psych,
+                        nc_ext_par_substance, nc_ext_par_crim, nc_ext_par_sep, 12, "prop")
+# Adjusted effect
+adjusted <- extract_res(nc_ext_maltreatment, nc_ext_dom_violence, nc_ext_par_psych,
+                            nc_ext_par_substance, nc_ext_par_crim, nc_ext_par_sep, 14, "adjusted")
+# Genetic confounding
+confound <- extract_res(nc_ext_maltreatment, nc_ext_dom_violence, nc_ext_par_psych,
+                            nc_ext_par_substance, nc_ext_par_crim, nc_ext_par_sep, 11, "confound") 
+# Total effect
+total <- extract_res(nc_ext_maltreatment, nc_ext_dom_violence, nc_ext_par_psych,
+                         nc_ext_par_substance, nc_ext_par_crim, nc_ext_par_sep, 13, "total") 
+# Generate dataframe
+nc_ext <- data.frame(prop, total, confound, adjusted)
+nc_ext <- subset(nc_ext, select = -c(ACE.1, ACE.2, ACE.3)) # drop extra ACE variables
+```
+
+### ALSPAC - Aggregate results for proportions of associations with externalising problems explained by negative control polygenic scores 
+```{r}
+nc_ext$var <- ((nc_ext$prop_up_ci - nc_ext$prop_low_ci)/3.92)^2 # get variance
+nc_ext$ni <- 4106 # sample size
+
+#### Aggregate effect sizes (specify cor=0.3 due to correlations between ACEs)
+nc_ext$id <- 1
+agg_2a <- agg(id=id, es=prop_est, var=var, method = "BHHR", cor = mean_ace_cor_alspac, mod=NULL, data=nc_ext) 
+## Get p-value and other estimates
+est_model <- agg_2a$es
+var_model <- agg_2a$var
+se_model <- sqrt(agg_2a$var)
+lowci_model <- est_model - 1.96*se_model
+upci_model <- est_model + 1.96*se_model
+round((c(est_model, lowci_model, upci_model)),4)*100
+p <- 2*pnorm(-abs(est_model/se_model) )
+p
+```
+
+### ABCD - Run models for negative controls and internalising problems 
+```{r}
+rm(nc_int_maltreatment, nc_int_dom_violence, nc_int_par_psych, nc_int_par_substance,
+   nc_int_par_crim, nc_int_par_sep)
+
+# Specify that MH = internalising problems, with sex regressed out
+abcd_CC$MH <- scale(residuals(lm(cbcl_internalising ~ sex, data=abcd_CC, na.action=na.exclude)))
+
+# For each ACE, specify that ACE_1 = the particular ACE
+
+## Maltreatment
+abcd_CC$ACE_1 <- abcd_CC$maltreatment
+nc_int_maltreatment <- lavaan(NC_PGS_model, data=abcd_CC)
+summary(nc_int_maltreatment)
+
+### Domestic violence
+abcd_CC$ACE_1 <- abcd_CC$domestic_violence
+nc_int_dom_violence <- lavaan(NC_PGS_model, data=abcd_CC)
+summary(nc_int_dom_violence)
+
+### Parental psychopathology
+abcd_CC$ACE_1 <- abcd_CC$parental_psychopathology
+nc_int_par_psych <- lavaan(NC_PGS_model, data=abcd_CC)
+summary(nc_int_par_psych)
+
+### Parental substance abuse
+abcd_CC$ACE_1 <- abcd_CC$parental_substance
+nc_int_par_substance <- lavaan(NC_PGS_model, data=abcd_CC)
+summary(nc_int_par_substance)
+
+### Parental criminality
+abcd_CC$ACE_1 <- abcd_CC$parental_criminality
+nc_int_par_crim <- lavaan(NC_PGS_model, data=abcd_CC)
+summary(nc_int_par_crim)
+
+### Parental separation
+abcd_CC$ACE_1 <- abcd_CC$parental_separation
+nc_int_par_sep <- lavaan(NC_PGS_model, data=abcd_CC)
+summary(nc_int_par_sep)
+
+##### Pool results for internalising problems
+
+# Proportion explained by polygenic scores
+prop <- extract_res(nc_int_maltreatment, nc_int_dom_violence, nc_int_par_psych,
+                        nc_int_par_substance, nc_int_par_crim, nc_int_par_sep, 12, "prop")
+# Adjusted effect
+adjusted <- extract_res(nc_int_maltreatment, nc_int_dom_violence, nc_int_par_psych,
+                            nc_int_par_substance, nc_int_par_crim, nc_int_par_sep, 14, "adjusted")
+# Genetic confounding
+confound <- extract_res(nc_int_maltreatment, nc_int_dom_violence, nc_int_par_psych,
+                            nc_int_par_substance, nc_int_par_crim, nc_int_par_sep, 11, "confound") 
+# Total effect
+total <- extract_res(nc_int_maltreatment, nc_int_dom_violence, nc_int_par_psych,
+                         nc_int_par_substance, nc_int_par_crim, nc_int_par_sep, 13, "total") 
+# Generate dataframe
+nc_int <- data.frame(prop, total, confound, adjusted)
+nc_int <- subset(nc_int, select = -c(ACE.1, ACE.2, ACE.3)) # drop extra ACE variables
+```
+
+### ABCD - Aggregate results for proportions of associations with internalising problems explained by negative control polygenic scores 
+```{r}
+nc_int$var <- ((nc_int$prop_up_ci - nc_int$prop_low_ci)/3.92)^2 # get variance
+nc_int$ni <- 4662 # sample size
+
+#### Aggregate effect sizes (specify cor=0.3 due to correlations between ACEs)
+nc_int$id <- 1
+agg_2a <- agg(id=id, es=prop_est, var=var, method = "BHHR", cor = mean_ace_cor_abcd, mod=NULL, data=nc_int) 
+## Get p-value and other estimates
+est_model <- agg_2a$es
+var_model <- agg_2a$var
+se_model <- sqrt(agg_2a$var)
+lowci_model <- est_model - 1.96*se_model
+upci_model <- est_model + 1.96*se_model
+round((c(est_model, lowci_model, upci_model)),4)*100
+p <- 2*pnorm(-abs(est_model/se_model) )
+p
+```
+
+### ABCD - Run models for negative controls and externalising problems 
+```{r}
+rm(nc_ext_maltreatment, nc_ext_dom_violence, nc_ext_par_psych, nc_ext_par_substance,
+   nc_ext_par_crim, nc_ext_par_sep)
+# Specify that MH = internalising problems, with sex regressed out
+abcd_CC$MH <- scale(residuals(lm(cbcl_externalising ~ sex, data=abcd_CC, na.action=na.exclude)))
+
+# For each ACE, specify that ACE_1 = the particular ACE
+## Maltreatment
+abcd_CC$ACE_1 <- abcd_CC$maltreatment
+nc_ext_maltreatment <- lavaan(NC_PGS_model, data=abcd_CC)
+summary(nc_ext_maltreatment)
+
+### Domestic violence
+abcd_CC$ACE_1 <- abcd_CC$domestic_violence
+nc_ext_dom_violence <- lavaan(NC_PGS_model, data=abcd_CC)
+summary(nc_ext_dom_violence)
+
+### Parental psychopathology
+abcd_CC$ACE_1 <- abcd_CC$parental_psychopathology
+nc_ext_par_psych <- lavaan(NC_PGS_model, data=abcd_CC)
+summary(nc_ext_par_psych)
+
+### Parental substance abuse
+abcd_CC$ACE_1 <- abcd_CC$parental_substance
+nc_ext_par_substance <- lavaan(NC_PGS_model, data=abcd_CC)
+summary(nc_ext_par_substance)
+
+### Parental criminality
+abcd_CC$ACE_1 <- abcd_CC$parental_criminality
+nc_ext_par_crim <- lavaan(NC_PGS_model, data=abcd_CC)
+summary(nc_ext_par_crim)
+
+### Parental separation
+abcd_CC$ACE_1 <- abcd_CC$parental_separation
+nc_ext_par_sep <- lavaan(NC_PGS_model, data=abcd_CC)
+summary(nc_ext_par_sep)
+
+##### Pool results for internalising problems
+
+# Proportion explained by polygenic scores
+prop <- extract_res(nc_ext_maltreatment, nc_ext_dom_violence, nc_ext_par_psych,
+                        nc_ext_par_substance, nc_ext_par_crim, nc_ext_par_sep, 12, "prop")
+# Adjusted effect
+adjusted <- extract_res(nc_ext_maltreatment, nc_ext_dom_violence, nc_ext_par_psych,
+                            nc_ext_par_substance, nc_ext_par_crim, nc_ext_par_sep, 14, "adjusted")
+# Genetic confounding
+confound <- extract_res(nc_ext_maltreatment, nc_ext_dom_violence, nc_ext_par_psych,
+                            nc_ext_par_substance, nc_ext_par_crim, nc_ext_par_sep, 11, "confound") 
+# Total effect
+total <- extract_res(nc_ext_maltreatment, nc_ext_dom_violence, nc_ext_par_psych,
+                         nc_ext_par_substance, nc_ext_par_crim, nc_ext_par_sep, 13, "total") 
+# Generate dataframe
+nc_ext <- data.frame(prop, total, confound, adjusted)
+nc_ext <- subset(nc_ext, select = -c(ACE.1, ACE.2, ACE.3)) # drop extra ACE variables
+```
+
+### ABCD - Aggregate results for proportions of associations with externalising problems explained by negative control polygenic scores 
+```{r}
+nc_ext$var <- ((nc_ext$prop_up_ci - nc_ext$prop_low_ci)/3.92)^2 # get variance
+nc_ext$ni <- 4662 # sample size
+nc_ext$id <- 1
+
+#### Aggregate effect sizes 
+agg_2a <- agg(id=id, es=prop_est, var=var, method = "BHHR", cor = mean_ace_cor_abcd, mod=NULL, data=nc_ext) 
+## Get p-value and other estimates
+est_model <- agg_2a$es
+var_model <- agg_2a$var
+se_model <- sqrt(agg_2a$var)
+lowci_model <- est_model - 1.96*se_model
+upci_model <- est_model + 1.96*se_model
+round((c(est_model, lowci_model, upci_model)),4)*100
+p <- 2*pnorm(-abs(est_model/se_model) )
+p
+```
+
+# Hypothesis 2B 
+```{r clear workspace, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+# Clear workspace
+rm(ACE, ace_diffs_model, adjusted, agg_2a,
+   confound, diffs_odds, diffs_se, est, est_model, 
+   ext, extract_res, fit_ext_dom_violence, fit_ext_maltreatment, 
+   fit_ext_par_crim, fit_ext_par_psych, fit_ext_par_sep, 
+   fit_ext_par_substance, fit_int_dom_violence, fit_int_maltreatment, 
+   fit_int_par_crim, fit_int_par_psych, fit_int_par_sep, 
+   fit_int_par_substance, fit.mi.ace, int, int_ext, log_odds_combs, log_odds_diff,
+   low_ci_ext, low_ci_int, lowci_model, multi_PGS_model, 
+   numeric_cols, p_any, p_model, pair_combs, prop, se, se_combs, se_diff,
+   se_model, total, total_est, var_model)
+
+### Load Gsens and data.table package
+library(Gsens)
+library(data.table)
+```
+
+## Define functions for formatting Gsens results
+```{r}
+## Function to put results into a table 
+format_gsens_res <- function(gsens_mal, gsens_dom_vi, gsens_par_psych,
+                             gsens_par_sub, gsens_par_crim, gsens_par_sep) {
+  gsens_res <- rbind(gsens_mal[1:4,c(1:2,5:6)],
+                     gsens_dom_vi[1:4,c(1:2,5:6)],
+                     gsens_par_psych[1:4,c(1:2,5:6)],
+                     gsens_par_sub[1:4,c(1:2,5:6)],
+                     gsens_par_crim[1:4,c(1:2,5:6)],
+                     gsens_par_sep[1:4,c(1:2,5:6)])
+  gsens_res$ACE <-  c(rep("maltreatment", 4),
+                      rep("domestic_violence",4),
+                      rep("par_psych", 4),
+                      rep("par_substance", 4),
+                      rep("par_criminal", 4),
+                      rep("par_sep", 4))
+  # Convert to wide dataframe
+  gsens_res <- setDT(gsens_res, keep.rownames = TRUE)[] # make rownames a variable
+  gsens_res$rn <- gsub('[[:digit:]]+', '', gsens_res$rn)
+  gsens_res <- reshape(gsens_res, idvar = "ACE", timevar = "rn", direction = "wide")
+  return(gsens_res)
+}
+
+#### Function to aggregate proportions across ACEs
+agg_res <- function(data, corr_aces, N) {
+  # derive variance of the proportion
+  data$Prop_var <- data$se.Prop^2
+  # Derive variable indexing N of sample
+  data$ni <- N
+  # Derive ID variable (for later aggregation)
+  data$id <- 1
+  
+  # Aggregate effect sizes 
+  agg_2b <- agg(id = id, es = est.Prop, var = Prop_var, method = "BHHR", cor = corr_aces, mod = NULL, data = data) 
+  
+  # Extract transformed estimates
+  est_model <- agg_2b$es
+  var_model <- agg_2b$var
+  se_model <- sqrt(agg_2b$var)
+  lowci_model <- est_model - 1.96*se_model
+  upci_model <- est_model + 1.96*se_model
+  return(c(est_model, lowci_model, upci_model))
+}
+```
+
+## Define Gsens function for proportions
+```{r}
+gsensY_prop <- function (rxy, rgx, rgy, n, h2, constrain = NULL, print = TRUE) 
+{
+  mat = matrix(c(1, rgx, rgy, rgx, 1, rxy, rgy, rxy, 1), ncol = 3, 
+               nrow = 3)
+  colnames(mat) = c("G", "X", "Y")
+  rownames(mat) = c("G", "X", "Y")
+  model1 <- paste("\n                  Y ~ bxy*X+bgy*GG # Y depends on X and true polygenic score\n                  X ~ bgx*GG # X depends on true polygenic score\n                  GG =~ l*G # true polygenic score is estimated by G\n                  GG ~~ 1*GG # true polygenic score will be standardised\n                  Y ~~ Y # residual error of Y\n                  X ~~ X # residual error of X\n                  G ~~ vg*G # measurement error in G due to SNP selection & sampling error\n                  bgy+bgx*bxy == sqrt(", 
+                  h2, ") # heritability constraint\n                  conf:=bgx*bgy                  #Confounding effect in standardized model\n                  total:=conf+bxy #total effect\n   prop:=conf/total\n", 
+                  constrain, " #optional constraints\n                  ")
+  fit1 = lavaan(model1, sample.cov = mat, sample.nobs = n, 
+                estimator = "GLS")
+  if (print) {
+    summary(fit1)
+  }
+  pe = parameterestimates(fit1)
+  pe$pvalue = formatC(2 * pnorm(-abs(pe$z)), digits = 5)
+  results = data.frame(rbind(pe[pe$label == "bxy", ], 
+                             pe[pe$label ==  "conf", ], 
+                             pe[pe$label == "total", ],
+                             pe[pe$label == "prop", ]))[, 5:10] # Extract proportion
+  results = results %>% mutate_if(is.numeric, round, 3)
+  rownames(results) = c("Adjusted Bxy", "Genetic confounding", 
+                        "Total effect", "Prop")
+  results
+}
+```
+
+## ALSPAC - Step 1. Obtain correlation between the ACE and the mental health outcome 	
+```{r}
+# To run Gsens, need to obtain 3 sets of correlations:
+# 1. Correlation between the ACE and the mental health outcome
+# 2. Correlation between the observed polygenic scores and the ACE
+# 3. Correlation between the observed polygenic scores and the mental health outcome
+
+# To get the correlation between the ACE and mental health outcome, take 2 steps:
+# - 1. Run a linear regression model predicting the mental health outcome from the ACE 
+# - 2. Take the square root of the R2 value reflecting the variance in the mental health outcome explained by the ACE
+# Note. All models will be estimated using the lavaan package, accounting for sex and principal components. 
+
+# Specify lavaan model
+reg_mh_ace <- '
+# Regression
+MH ~ ACE
+# Variance in outcome
+MH ~~ MH
+# Intercept
+MH ~ 1'
+
+#### Internalising problems - make MH = internalising problems with sex and PCs regressed out
+alspac_CC$MH <- scale(residuals(lm(internalising10 ~ sex + PC1 + PC2 + PC3 + PC4 + 
+                                                    PC5 + PC6 + PC7 + PC8 + PC9 + PC10, data=alspac_CC, na.action=na.exclude)))
+## Maltreatment
+alspac_CC$ACE <- alspac_CC$maltreatment_0_9.5yrs
+fit <- lavaan(reg_mh_ace, data=alspac_CC)
+r2_mal <- lavInspect(fit, "r2") # extract results
+
+### Domestic violence
+alspac_CC$ACE <- alspac_CC$violence_between_parents_0_9.5yrs
+fit <- lavaan(reg_mh_ace, data=alspac_CC)
+r2_domvi <- lavInspect(fit, "r2") # extract results
+
+### Parental psychopathology
+alspac_CC$ACE <- alspac_CC$mental_health_problems_or_suicide_0_9.5yrs
+fit <- lavaan(reg_mh_ace, data=alspac_CC)
+r2_parpsych <- lavInspect(fit, "r2") # extract results
+
+### Parental substance abuse
+alspac_CC$ACE <- alspac_CC$substance_household_0_9.5yrs
+fit <- lavaan(reg_mh_ace, data=alspac_CC)
+r2_parsub <- lavInspect(fit, "r2") # extract results
+
+### Parental criminality
+alspac_CC$ACE <- alspac_CC$parent_convicted_offence_0_9.5yrs
+fit <- lavaan(reg_mh_ace, data=alspac_CC)
+r2_parcrim <- lavInspect(fit, "r2") # extract results
+
+### Parental separation
+alspac_CC$ACE <- alspac_CC$parental_separation_0_9.5yrs
+fit <- lavaan(reg_mh_ace, data=alspac_CC)
+r2_parsep <- lavInspect(fit, "r2") # extract results
+
+ACE <- c("maltreatment", "domestic_violence", "par_substance", "par_psych", "par_criminal", "par_sep")
+r2 <- c(r2_mal, r2_domvi, r2_parsub, r2_parpsych, r2_parcrim, r2_parsep)
+r2_int.df <- data.frame(ACE, r2) # make dataframe with results
+
+#### Repeat for externalising
+# Specify that MH = externalising problems (with sex + 10 PCs regressed out)
+#### Internalising problems - make MH = internalising problems with sex and PCs regressed out
+alspac_CC$MH <- scale(residuals(lm(externalising10 ~ sex + PC1 + PC2 + PC3 + PC4 + 
+                                                    PC5 + PC6 + PC7 + PC8 + PC9 + PC10, data=alspac_CC, na.action=na.exclude)))
+## Maltreatment
+alspac_CC$ACE <- alspac_CC$maltreatment_0_9.5yrs
+fit <- lavaan(reg_mh_ace, data=alspac_CC)
+r2_mal <- lavInspect(fit, "r2") # extract results
+
+### Domestic violence
+alspac_CC$ACE <- alspac_CC$violence_between_parents_0_9.5yrs
+fit <- lavaan(reg_mh_ace, data=alspac_CC)
+r2_domvi <- lavInspect(fit, "r2") # extract results
+
+### Parental psychopathology
+alspac_CC$ACE <- alspac_CC$mental_health_problems_or_suicide_0_9.5yrs
+fit <- lavaan(reg_mh_ace, data=alspac_CC)
+r2_parpsych <- lavInspect(fit, "r2") # extract results
+
+### Parental substance abuse
+alspac_CC$ACE <- alspac_CC$substance_household_0_9.5yrs
+fit <- lavaan(reg_mh_ace, data=alspac_CC)
+r2_parsub <- lavInspect(fit, "r2") # extract results
+
+### Parental criminality
+alspac_CC$ACE <- alspac_CC$parent_convicted_offence_0_9.5yrs
+fit <- lavaan(reg_mh_ace, data=alspac_CC)
+r2_parcrim <- lavInspect(fit, "r2") # extract results
+
+### Parental separation
+alspac_CC$ACE <- alspac_CC$parental_separation_0_9.5yrs
+fit <- lavaan(reg_mh_ace, data=alspac_CC)
+r2_parsep <- lavInspect(fit, "r2") # extract results
+
+ACE <- c("maltreatment", "domestic_violence", "par_substance", "par_psych", "par_criminal", "par_sep")
+r2 <- c(r2_mal, r2_domvi, r2_parsub, r2_parpsych, r2_parcrim, r2_parsep)
+r2_ext.df <- data.frame(ACE, r2) # make dataframe with results
+
+# Combine dataframes for the associations between ACEs and internalising and externalising problems 
+ace_mh_alspac <- rbind(r2_int.df, r2_ext.df)
+ace_mh_alspac$outcome <- c(rep("int", 6), rep("ext", 6)) # add outcome variable
+ace_mh_alspac$r <- sqrt(ace_mh_alspac$r2) # calculate r from r2
+ace_mh_alspac
+```
+
+## ALSPAC - Step 2. Obtain correlation between observed polygenic scores for mental health problems and the ACE (a path)	
+```{r}
+# To get the correlation between observed polygenic scores for mental health problems and ACEs, take 2 steps:
+# - 1. Run a probit regression model predicting the ACE from the polygenic scores 
+# - 2. Take the square root of the R2 value reflecting the variance in the (latent-response) ACE variable explained by the polygenic scores
+
+# Specify lavaan model
+reg_ace_pgs <- "
+  # Regression  
+  ACE ~ ADHD_PGS_r + alcohol_PGS_r + antisocial_PGS_r + anxiety_PGS_r + autism_PGS_r + bipolar_PGS_r + depression_PGS_r + schizophrenia_PGS_r
+  "
+
+#### Run across ACE types
+
+# Maltreatment analyses
+alspac_CC$ACE <- alspac_CC$maltreatment_0_9.5yrs #transform so ACE = maltreatment
+fit <- lavaan(reg_ace_pgs, ordered=c("ACE"), estimator = "WLSMV", data=alspac_CC) # fit lavaan model
+r2_mal <- lavInspect(fit, "r2") # extract results
+
+# Domestic violence analyses
+alspac_CC$ACE <- alspac_CC$violence_between_parents_0_9.5yrs #transform so ACE = domestic violence
+fit <- lavaan(reg_ace_pgs, ordered=c("ACE"), estimator = "WLSMV", data=alspac_CC) # fit lavaan model
+r2_domvi <- lavInspect(fit, "r2") # extract results
+
+# Parental substance abuse analyses
+alspac_CC$ACE <- alspac_CC$substance_household_0_9.5yrs #transform so ACE = parental substance abuse
+fit <- lavaan(reg_ace_pgs, ordered=c("ACE"), estimator = "WLSMV", data=alspac_CC) # fit lavaan model
+r2_parsub <- lavInspect(fit, "r2") # extract results
+
+# Parental psychopathology analyses
+alspac_CC$ACE <- alspac_CC$mental_health_problems_or_suicide_0_9.5yrs #transform so ACE = parental psychopathology
+fit <- lavaan(reg_ace_pgs, ordered=c("ACE"), estimator = "WLSMV", data=alspac_CC) # fit lavaan model
+r2_parpsych <- lavInspect(fit, "r2") # extract results
+
+# Parental criminality analyses
+alspac_CC$ACE <- alspac_CC$parent_convicted_offence_0_9.5yrs #transform so ACE = parental criminality
+fit <- lavaan(reg_ace_pgs, ordered=c("ACE"), estimator = "WLSMV", data=alspac_CC) # fit lavaan model
+r2_parcrim <- lavInspect(fit, "r2") # extract results
+
+# Parental separation analyses
+alspac_CC$ACE <- alspac_CC$parental_separation_0_9.5yrs #transform so ACE = parental substance abuse
+fit <- lavaan(reg_ace_pgs, ordered=c("ACE"), estimator = "WLSMV", data=alspac_CC) # fit lavaan model
+r2_parsep <- lavInspect(fit, "r2") # extract results
+
+# Return results
+pgs_r2 <- c(r2_mal, r2_domvi, r2_parpsych, r2_parsub, r2_parcrim, r2_parsep)
+pgs_ace_alspac <- data.frame(ACE=c("maltreatment", "domestic_violence", "par_psych", "par_substance", "par_criminal", "par_sep"), pgs_r2)
+pgs_ace_alspac$r <- sqrt(pgs_ace_alspac$pgs_r2)
+```
+
+## ALSPAC - Step 3. Obtain correlation between observed polygenic scores and the mental health outcome (b path)	
+```{r}
+# To get the correlation between observed polygenic scores for mental health problems and mental health, take 2 steps:
+# - 1. Run a linear regression model predicting the mental health outcome from the polygenic scores for mental health problems 
+# - 2. Take the square root of the R2 value reflecting the variance in the mental health outcome explained by the polygenic scores
+
+# Specify lavaan model
+reg_mh_pgs <- '
+# Regression  
+MH ~ ADHD_PGS_r + alcohol_PGS_r + antisocial_PGS_r + anxiety_PGS_r + autism_PGS_r + bipolar_PGS_r + depression_PGS_r + schizophrenia_PGS_r
+# Variance
+MH ~~ MH
+# Intercept
+MH ~ 1
+'
+
+## Run model for PGSs and internalising problems
+# Specify that MH = internalising problems (with sex + 10 PCs regressed out)
+alspac_CC$MH <- scale(residuals(lm(internalising10 ~ sex + PC1 + PC2 + PC3 + PC4 + 
+                                                    PC5 + PC6 + PC7 + PC8 + PC9 + PC10, data=alspac_CC, na.action=na.exclude)))
+fit <- lavaan(reg_mh_pgs, data=alspac_CC)
+r2_int <- lavInspect(fit, "r2") # extract results
+
+## Run model for PGSs and externalising problems
+# Specify that MH = externalising problems (with sex + 10 PCs regressed out)
+alspac_CC$MH <- scale(residuals(lm(externalising10 ~ sex + PC1 + PC2 + PC3 + PC4 + 
+                                                    PC5 + PC6 + PC7 + PC8 + PC9 + PC10, data=alspac_CC, na.action=na.exclude)))
+fit <- lavaan(reg_mh_pgs, data=alspac_CC)
+r2_ext <- lavInspect(fit, "r2") # extract results
+
+# Combine results into dataframe
+pgs_mh_alspac <- data.frame(outcome = c("int", "ext"), mh_pgs_r2 = c(r2_int, r2_ext))
+pgs_mh_alspac$r <- sqrt(pgs_mh_alspac$mh_pgs_r2)
+pgs_mh_alspac
+```
+
+## ALSPAC - Run Gsens for internalising problems 
+```{r}
+# Maltreatment
+gsens_int_mal <- 
+  gsensY_prop(
+    rxy = ace_mh_alspac$r[ace_mh_alspac$ACE=="maltreatment" & ace_mh_alspac$outcome=="int"],
+    rgx = pgs_ace_alspac$r[pgs_ace_alspac$ACE=="maltreatment"],
+    rgy = pgs_mh_alspac$r[pgs_mh_alspac$outcome=="int"],
+    n = 4106,
+    h2 = 0.06,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+
+# Domestic violence: 100%
+gsens_int_dom_vi <- 
+  gsensY_prop(
+    rxy = ace_mh_alspac$r[ace_mh_alspac$ACE=="domestic_violence" & ace_mh_alspac$outcome=="int"],
+    rgx = pgs_ace_alspac$r[pgs_ace_alspac$ACE=="domestic_violence"],
+    rgy = pgs_mh_alspac$r[pgs_mh_alspac$outcome=="int"],
+    n = 4106,
+    h2 = 0.06,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+
+# Parental psychopathology
+gsens_int_par_psych <- 
+  gsensY_prop(
+    rxy = ace_mh_alspac$r[ace_mh_alspac$ACE=="par_psych" & ace_mh_alspac$outcome=="int"],
+    rgx = pgs_ace_alspac$r[pgs_ace_alspac$ACE=="par_psych"],
+    rgy = pgs_mh_alspac$r[pgs_mh_alspac$outcome=="int"],
+    n = 4106,
+    h2 = 0.06,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+
+# Parental substance abuse: 100%
+gsens_int_par_sub <- 
+  gsensY_prop(
+    rxy = ace_mh_alspac$r[ace_mh_alspac$ACE=="par_substance" & ace_mh_alspac$outcome=="int"],
+    rgx = pgs_ace_alspac$r[pgs_ace_alspac$ACE=="par_substance"],
+    rgy = pgs_mh_alspac$r[pgs_mh_alspac$outcome=="int"],
+    n = 4106,
+    h2 = 0.06,
+    constrain = 'bgx*bgy < bgx*bgy+bxy')
+
+# Parental criminality: 100
+gsens_int_par_crim <- 
+  gsensY_prop(
+    rxy = ace_mh_alspac$r[ace_mh_alspac$ACE=="par_criminal" & ace_mh_alspac$outcome=="int"],
+    rgx = pgs_ace_alspac$r[pgs_ace_alspac$ACE=="par_criminal"],
+    rgy = pgs_mh_alspac$r[pgs_mh_alspac$outcome=="int"],
+    n = 4106,
+    h2 = 0.06,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+
+# Parental separation: 100%
+gsens_int_par_sep <- 
+  gsensY_prop(
+    rxy = ace_mh_alspac$r[ace_mh_alspac$ACE=="par_sep" & ace_mh_alspac$outcome=="int"],
+    rgx = pgs_ace_alspac$r[pgs_ace_alspac$ACE=="par_sep"],
+    rgy = pgs_mh_alspac$r[pgs_mh_alspac$outcome=="int"],
+    n = 4106,
+    h2 = 0.06,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+```
+
+## ALSPAC - Run Gsens for externalising problems
+```{r}
+# Maltreatment
+gsens_ext_mal <- 
+  gsensY_prop(
+    rxy = ace_mh_alspac$r[ace_mh_alspac$ACE=="maltreatment" & ace_mh_alspac$outcome=="ext"],
+    rgx = pgs_ace_alspac$r[pgs_ace_alspac$ACE=="maltreatment"],
+    rgy = pgs_mh_alspac$r[pgs_mh_alspac$outcome=="ext"],
+    n = 4106,
+    h2 = 0.09,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+
+# Domestic violence
+gsens_ext_dom_vi <- 
+  gsensY_prop(
+    rxy = ace_mh_alspac$r[ace_mh_alspac$ACE=="domestic_violence" & ace_mh_alspac$outcome=="ext"],
+    rgx = pgs_ace_alspac$r[pgs_ace_alspac$ACE=="domestic_violence"],
+    rgy = pgs_mh_alspac$r[pgs_mh_alspac$outcome=="ext"],
+    n = 4106,
+    h2 = 0.09,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+
+# Parental psychopathology
+gsens_ext_par_psych <- 
+  gsensY_prop(
+    rxy = ace_mh_alspac$r[ace_mh_alspac$ACE=="par_psych" & ace_mh_alspac$outcome=="ext"],
+    rgx = pgs_ace_alspac$r[pgs_ace_alspac$ACE=="par_psych"],
+    rgy = pgs_mh_alspac$r[pgs_mh_alspac$outcome=="ext"],
+    n = 4106,
+    h2 = 0.09,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+
+# Parental substance abuse: 100%
+gsens_ext_par_sub <- 
+  gsensY_prop(
+    rxy = ace_mh_alspac$r[ace_mh_alspac$ACE=="par_substance" & ace_mh_alspac$outcome=="ext"],
+    rgx = pgs_ace_alspac$r[pgs_ace_alspac$ACE=="par_substance"],
+    rgy = pgs_mh_alspac$r[pgs_mh_alspac$outcome=="ext"],
+    n = 4106,
+    h2 = 0.09,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+
+# Parental criminality: 100%
+gsens_ext_par_crim <- 
+  gsensY_prop(
+    rxy = ace_mh_alspac$r[ace_mh_alspac$ACE=="par_criminal" & ace_mh_alspac$outcome=="ext"],
+    rgx = pgs_ace_alspac$r[pgs_ace_alspac$ACE=="par_criminal"],
+    rgy = pgs_mh_alspac$r[pgs_mh_alspac$outcome=="ext"],
+    n = 4106,
+    h2 = 0.09,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+
+# Parental separation: 100%
+gsens_ext_par_sep <- 
+  gsensY_prop(
+    rxy = ace_mh_alspac$r[ace_mh_alspac$ACE=="par_sep" & ace_mh_alspac$outcome=="ext"],
+    rgx = pgs_ace_alspac$r[pgs_ace_alspac$ACE=="par_sep"],
+    rgy = pgs_mh_alspac$r[pgs_mh_alspac$outcome=="ext"],
+    n = 4106,
+    h2 = 0.09,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+```
+
+## ALSPAC - Pool gsens results using all PGSs and format for table/plot
+```{r}
+## Internalising problems
+# Apply function to extract gsens results into a table
+gsens_int_alspac <- format_gsens_res(gsens_int_mal, gsens_int_dom_vi, gsens_int_par_psych,
+                              gsens_int_par_sub, gsens_int_par_crim, gsens_int_par_sep)
+
+# Ensure upper limit CI is not over 1 as not 
+gsens_int_alspac$ci.upper.Prop[gsens_int_alspac$ci.upper.Prop>1] <- 1
+
+# Apply function to aggregate gsens results
+round(agg_res(gsens_int_alspac, mean_ace_cor_alspac, 4106),4)*100 # 91.53, 78.78-104.29 (report as 100)
+
+# Return min and max
+subset(gsens_int_alspac, est.Prop == min(est.Prop), select=c(ACE, est.Prop)) 
+subset(gsens_int_alspac, est.Prop == max(est.Prop), select=c(ACE, est.Prop)) 
+
+## Externalising problems
+# Apply function to extract gsens results into a table
+gsens_ext_alspac <- format_gsens_res(gsens_ext_mal, gsens_ext_dom_vi, gsens_ext_par_psych,
+                              gsens_ext_par_sub, gsens_ext_par_crim, gsens_ext_par_sep)
+# Apply function to aggregate gsens results
+round(agg_res(gsens_ext_alspac, mean_ace_cor_alspac, 4106),4)*100 
+# Return min and max
+subset(gsens_ext_alspac, est.Prop == min(est.Prop), select=c(ACE, est.Prop)) 
+subset(gsens_ext_alspac, est.Prop == max(est.Prop), select=c(ACE, est.Prop)) 
+
+# Combine internalising and externalising results for table
+gsens_alspac <- rbind(gsens_int_alspac, gsens_ext_alspac)
+gsens_alspac$outcome <- c(rep("internalising", 6), rep("externalising", 6))
+
+# Combine effect estimates and CIs into a single cell
+gsens_alspac$Adjusted <- paste_res(gsens_alspac$`est.Adjusted Bxy`, gsens_alspac$`ci.lower.Adjusted Bxy`, gsens_alspac$`ci.upper.Adjusted Bxy`)
+gsens_alspac$GeneticConfounding <- paste_res(gsens_alspac$`est.Genetic confounding`, gsens_alspac$`ci.lower.Genetic confounding`, gsens_alspac$`ci.upper.Genetic confounding`)
+gsens_alspac$Total <- paste_res(gsens_alspac$`est.Total effect`, gsens_alspac$`ci.lower.Total effect`, gsens_alspac$`ci.upper.Total effect`)
+gsens_alspac$Prop <- paste_res(gsens_alspac$est.Prop, gsens_alspac$ci.lower.Prop, gsens_alspac$ci.upper.Prop)
+
+# Condense dataframe
+gsens_alspac <- gsens_alspac[,c("ACE", "Total", "Adjusted", "GeneticConfounding", "Prop")]
+aces_labels <- c(maltreatment="Maltreatment", domestic_violence="Domestic violence", par_psych="Parental mental illness", 
+                 par_substance="Parental substance abuse", par_sep="Parental separation", par_criminal="Parental criminality")
+gsens_alspac$ACE <- as.character(aces_labels[gsens_alspac$ACE])
+gsens_alspac
+```
+
+## ABCD - Step 1. Obtain correlation between the ACE and the mental health outcome 	
+```{r}
+# remove objects for ALSPAC data
+rm(r2_mal, r2_domvi, r2_parsub, r2_parpsych, r2_parcrim, r2_parsep, r2, r2_int.df)
+# To get the correlation between the ACE and mental health outcome, take 2 steps:
+# - 1. Run a linear regression model predicting the mental health outcome from the ACE 
+# - 2. Take the square root of the R2 value reflecting the variance in the mental health outcome explained by the ACE
+# Note. All models will be estimated using the lavaan package, accounting for sex and principal components. 
+
+# Specify lavaan model
+reg_mh_ace <- '
+# Regression
+MH ~ ACE
+# Variance in outcome
+MH ~~ MH
+# Intercept
+MH ~ 1'
+
+#### Internalising problems - make MH = internalising problems with sex and PCs regressed out
+abcd_CC$MH <- scale(residuals(lm(cbcl_internalising ~ sex + PC1 + PC2 + PC3 + PC4 + 
+                                                    PC5 + PC6 + PC7 + PC8 + PC9 + PC10, data=abcd_CC, na.action=na.exclude)))
+## Maltreatment
+abcd_CC$ACE <- abcd_CC$maltreatment
+fit <- lavaan(reg_mh_ace, data=abcd_CC)
+r2_mal <- lavInspect(fit, "r2") # extract results
+
+### Domestic violence
+abcd_CC$ACE <- abcd_CC$domestic_violence
+fit <- lavaan(reg_mh_ace, data=abcd_CC)
+r2_domvi <- lavInspect(fit, "r2") # extract results
+
+### Parental psychopathology
+abcd_CC$ACE <- abcd_CC$parental_psychopathology
+fit <- lavaan(reg_mh_ace, data=abcd_CC)
+r2_parpsych <- lavInspect(fit, "r2") # extract results
+
+### Parental substance abuse
+abcd_CC$ACE <- abcd_CC$parental_substance
+fit <- lavaan(reg_mh_ace, data=abcd_CC)
+r2_parsub <- lavInspect(fit, "r2") # extract results
+
+### Parental criminality
+abcd_CC$ACE <- abcd_CC$parental_criminality
+fit <- lavaan(reg_mh_ace, data=abcd_CC)
+r2_parcrim <- lavInspect(fit, "r2") # extract results
+
+### Parental separation
+abcd_CC$ACE <- abcd_CC$parental_separation
+fit <- lavaan(reg_mh_ace, data=abcd_CC)
+r2_parsep <- lavInspect(fit, "r2") # extract results
+
+ACE <- c("maltreatment", "domestic_violence", "par_substance", "par_psych", "par_criminal", "par_sep")
+r2 <- c(r2_mal, r2_domvi, r2_parsub, r2_parpsych, r2_parcrim, r2_parsep)
+r2_int.df <- data.frame(ACE, r2) # make dataframe with results
+rm(r2_mal, r2_domvi, r2_parsub, r2_parpsych, r2_parcrim, r2_parsep)
+
+#### Repeat for externalising
+# Specify that MH = externalising problems (with sex + 10 PCs regressed out)
+#### Internalising problems - make MH = internalising problems with sex and PCs regressed out
+abcd_CC$MH <- scale(residuals(lm(cbcl_externalising ~ sex + PC1 + PC2 + PC3 + PC4 + 
+                                                    PC5 + PC6 + PC7 + PC8 + PC9 + PC10, data=abcd_CC, na.action=na.exclude)))
+## Maltreatment
+abcd_CC$ACE <- abcd_CC$maltreatment
+fit <- lavaan(reg_mh_ace, data=abcd_CC)
+r2_mal <- lavInspect(fit, "r2") # extract results
+
+### Domestic violence
+abcd_CC$ACE <- abcd_CC$domestic_violence
+fit <- lavaan(reg_mh_ace, data=abcd_CC)
+r2_domvi <- lavInspect(fit, "r2") # extract results
+
+### Parental psychopathology
+abcd_CC$ACE <- abcd_CC$parental_psychopathology
+fit <- lavaan(reg_mh_ace, data=abcd_CC)
+r2_parpsych <- lavInspect(fit, "r2") # extract results
+
+### Parental substance abuse
+abcd_CC$ACE <- abcd_CC$parental_substance
+fit <- lavaan(reg_mh_ace, data=abcd_CC)
+r2_parsub <- lavInspect(fit, "r2") # extract results
+
+### Parental criminality
+abcd_CC$ACE <- abcd_CC$parental_criminality
+fit <- lavaan(reg_mh_ace, data=abcd_CC)
+r2_parcrim <- lavInspect(fit, "r2") # extract results
+
+### Parental separation
+abcd_CC$ACE <- abcd_CC$parental_separation
+fit <- lavaan(reg_mh_ace, data=abcd_CC)
+r2_parsep <- lavInspect(fit, "r2") # extract results
+
+ACE <- c("maltreatment", "domestic_violence", "par_substance", "par_psych", "par_criminal", "par_sep")
+r2 <- c(r2_mal, r2_domvi, r2_parsub, r2_parpsych, r2_parcrim, r2_parsep)
+r2_ext.df <- data.frame(ACE, r2) # make dataframe with results
+
+# Combine dataframes for the associations between ACEs and internalising and externalising problems 
+ace_mh_abcd <- rbind(r2_int.df, r2_ext.df)
+ace_mh_abcd$outcome <- c(rep("int", 6), rep("ext", 6)) # add outcome variable
+ace_mh_abcd$r <- sqrt(ace_mh_abcd$r2) # calculate r from r2
+ace_mh_abcd
+```
+
+## ABCD - Step 2. Obtain correlation between observed polygenic scores for mental health problems and the ACE (a path)	
+```{r}
+# - 1. Run a probit regression model predicting the ACE from the polygenic scores 
+# - 2. Take the square root of the R2 value reflecting the variance in the (latent-response) ACE variable explained by the polygenic scores
+
+# Specify lavaan model
+reg_ace_pgs <- "
+  # Regression  
+  ACE ~ ADHD_PGS_r + alcohol_PGS_r + antisocial_PGS_r + anxiety_PGS_r + autism_PGS_r + bipolar_PGS_r + depression_PGS_r + schizophrenia_PGS_r
+  "
+
+#### Run across ACE types
+
+# Maltreatment analyses
+abcd_CC$ACE <- abcd_CC$maltreatment #transform so ACE = maltreatment
+fit <- lavaan(reg_ace_pgs, ordered=c("ACE"), estimator = "WLSMV", data=abcd_CC) # fit lavaan model
+r2_mal <- lavInspect(fit, "r2") # extract results
+
+# Domestic violence analyses
+abcd_CC$ACE <- abcd_CC$domestic_violence #transform so ACE = domestic violence
+fit <- lavaan(reg_ace_pgs, ordered=c("ACE"), estimator = "WLSMV", data=abcd_CC) # fit lavaan model
+r2_domvi <- lavInspect(fit, "r2") # extract results
+
+# Parental psychopathology analyses
+abcd_CC$ACE <- abcd_CC$parental_psychopathology #transform so ACE = parental psychopathology
+fit <- lavaan(reg_ace_pgs, ordered=c("ACE"), estimator = "WLSMV", data=abcd_CC) # fit lavaan model
+r2_parpsych <- lavInspect(fit, "r2") # extract results
+
+# Parental substance abuse analyses
+abcd_CC$ACE <- abcd_CC$parental_substance #transform so ACE = parental substance abuse
+fit <- lavaan(reg_ace_pgs, ordered=c("ACE"), estimator = "WLSMV", data=abcd_CC) # fit lavaan model
+r2_parsub <- lavInspect(fit, "r2") # extract results
+
+# Parental criminality analyses
+abcd_CC$ACE <- abcd_CC$parental_criminality #transform so ACE = parental criminality
+fit <- lavaan(reg_ace_pgs, ordered=c("ACE"), estimator = "WLSMV", data=abcd_CC) # fit lavaan model
+r2_parcrim <- lavInspect(fit, "r2") # extract results
+
+# Parental separation analyses
+abcd_CC$ACE <- abcd_CC$parental_separation #transform so ACE = parental substance abuse
+fit <- lavaan(reg_ace_pgs, ordered=c("ACE"), estimator = "WLSMV", data=abcd_CC) # fit lavaan model
+r2_parsep <- lavInspect(fit, "r2") # extract results
+
+# Return results
+pgs_r2 <- c(r2_mal, r2_domvi, r2_parpsych, r2_parsub, r2_parcrim, r2_parsep)
+pgs_ace_abcd<- data.frame(ACE=c("maltreatment", "domestic_violence", "par_psych", "par_substance", "par_criminal", "par_sep"), pgs_r2)
+pgs_ace_abcd$r <- sqrt(pgs_ace_abcd$pgs_r2)
+```
+
+## ABCD - Step 3. Obtain correlation between observed polygenic scores and the mental health outcome (b path)	
+```{r}
+# - 1. Run a linear regression model predicting the mental health outcome from the polygenic scores for mental health problems 
+# - 2. Take the square root of the R2 value reflecting the variance in the mental health outcome explained by the polygenic scores
+
+# Specify lavaan model
+reg_mh_pgs <- '
+# Regression  
+MH ~ ADHD_PGS_r + alcohol_PGS_r + antisocial_PGS_r + anxiety_PGS_r + autism_PGS_r + bipolar_PGS_r + depression_PGS_r + schizophrenia_PGS_r
+# Variance
+MH ~~ MH
+# Intercept
+MH ~ 1
+'
+
+## Run model for PGSs and internalising problems
+# Specify that MH = internalising problems (with sex + 10 PCs regressed out)
+abcd_CC$MH <- scale(residuals(lm(cbcl_internalising ~ sex + PC1 + PC2 + PC3 + PC4 + 
+                                                    PC5 + PC6 + PC7 + PC8 + PC9 + PC10, data=abcd_CC, na.action=na.exclude)))
+fit <- lavaan(reg_mh_pgs, data=abcd_CC)
+r2_int <- lavInspect(fit, "r2") # extract results
+
+## Run model for PGSs and externalising problems
+# Specify that MH = externalising problems (with sex + 10 PCs regressed out)
+abcd_CC$MH <- scale(residuals(lm(cbcl_externalising ~ sex + PC1 + PC2 + PC3 + PC4 + 
+                                                    PC5 + PC6 + PC7 + PC8 + PC9 + PC10, data=abcd_CC, na.action=na.exclude)))
+fit <- lavaan(reg_mh_pgs, data=abcd_CC)
+r2_ext <- lavInspect(fit, "r2") # extract results
+
+# Combine results into dataframe
+pgs_mh_abcd <- data.frame(outcome = c("int", "ext"),
+                          mh_pgs_r2 = c(r2_int, r2_ext))
+pgs_mh_abcd$r <- sqrt(pgs_mh_abcd$mh_pgs_r2)
+pgs_mh_abcd
+```
+
+## ABCD - Run Gsens for internalising problems 
+```{r}
+# Maltreatment: 53.7% 
+gsens_int_mal <- 
+  gsensY_prop(
+    rxy = ace_mh_abcd$r[ace_mh_abcd$ACE=="maltreatment" & ace_mh_abcd$outcome=="int"],
+    rgx = pgs_ace_abcd$r[pgs_ace_abcd$ACE=="maltreatment"],
+    rgy = pgs_mh_abcd$r[pgs_mh_abcd$outcome=="int"],
+    n = 4662,
+    h2 = 0.06,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+
+# Domestic violence: 55.6%
+gsens_int_dom_vi <- 
+  gsensY_prop(
+    rxy = ace_mh_abcd$r[ace_mh_abcd$ACE=="domestic_violence" & ace_mh_abcd$outcome=="int"],
+    rgx = pgs_ace_abcd$r[pgs_ace_abcd$ACE=="domestic_violence"],
+    rgy = pgs_mh_abcd$r[pgs_mh_abcd$outcome=="int"],
+    n = 4662,
+    h2 = 0.06,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+
+# Parental psychopathology: 22.5%
+gsens_int_par_psych <- 
+  gsensY_prop(
+    rxy = ace_mh_abcd$r[ace_mh_abcd$ACE=="par_psych" & ace_mh_abcd$outcome=="int"],
+    rgx = pgs_ace_abcd$r[pgs_ace_abcd$ACE=="par_psych"],
+    rgy = pgs_mh_abcd$r[pgs_mh_abcd$outcome=="int"],
+    n = 4662,
+    h2 = 0.06,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+
+# Parental substance abuse: 91.6%
+gsens_int_par_sub <- 
+  gsensY_prop(
+    rxy = ace_mh_abcd$r[ace_mh_abcd$ACE=="par_substance" & ace_mh_abcd$outcome=="int"],
+    rgx = pgs_ace_abcd$r[pgs_ace_abcd$ACE=="par_substance"],
+    rgy = pgs_mh_abcd$r[pgs_mh_abcd$outcome=="int"],
+    n = 4662,
+    h2 = 0.06,
+    constrain = 'bgx*bgy < bgx*bgy+bxy')
+
+# Parental criminality: 100
+gsens_int_par_crim <- 
+  gsensY_prop(
+    rxy = ace_mh_abcd$r[ace_mh_abcd$ACE=="par_criminal" & ace_mh_abcd$outcome=="int"],
+    rgx = pgs_ace_abcd$r[pgs_ace_abcd$ACE=="par_criminal"],
+    rgy = pgs_mh_abcd$r[pgs_mh_abcd$outcome=="int"],
+    n = 4662,
+    h2 = 0.06,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+
+# Parental separation: 100%
+gsens_int_par_sep <- 
+  gsensY_prop(
+    rxy = ace_mh_abcd$r[ace_mh_abcd$ACE=="par_sep" & ace_mh_abcd$outcome=="int"],
+    rgx = pgs_ace_abcd$r[pgs_ace_abcd$ACE=="par_sep"],
+    rgy = pgs_mh_abcd$r[pgs_mh_abcd$outcome=="int"],
+    n = 4662,
+    h2 = 0.06,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+```
+
+## ALSPAC - Run Gsens for externalising problems
+```{r}
+# Maltreatment: 41.7% 
+gsens_ext_mal <- 
+  gsensY_prop(
+    rxy = ace_mh_abcd$r[ace_mh_abcd$ACE=="maltreatment" & ace_mh_abcd$outcome=="ext"],
+    rgx = pgs_ace_abcd$r[pgs_ace_abcd$ACE=="maltreatment"],
+    rgy = pgs_mh_abcd$r[pgs_mh_abcd$outcome=="ext"],
+    n = 4662,
+    h2 = 0.09,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+
+# Domestic violence: 32.1%
+gsens_ext_dom_vi <- 
+  gsensY_prop(
+    rxy = ace_mh_abcd$r[ace_mh_abcd$ACE=="domestic_violence" & ace_mh_abcd$outcome=="ext"],
+    rgx = pgs_ace_abcd$r[pgs_ace_abcd$ACE=="domestic_violence"],
+    rgy = pgs_mh_abcd$r[pgs_mh_abcd$outcome=="ext"],
+    n = 4662,
+    h2 = 0.09,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+
+# Parental psychopathology: 28.6%
+gsens_ext_par_psych <- 
+  gsensY_prop(
+    rxy = ace_mh_abcd$r[ace_mh_abcd$ACE=="par_psych" & ace_mh_abcd$outcome=="ext"],
+    rgx = pgs_ace_abcd$r[pgs_ace_abcd$ACE=="par_psych"],
+    rgy = pgs_mh_abcd$r[pgs_mh_abcd$outcome=="ext"],
+    n = 4662,
+    h2 = 0.09,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+
+# Parental substance abuse: 65.2%
+gsens_ext_par_sub <- 
+  gsensY_prop(
+    rxy = ace_mh_abcd$r[ace_mh_abcd$ACE=="par_substance" & ace_mh_abcd$outcome=="ext"],
+    rgx = pgs_ace_abcd$r[pgs_ace_abcd$ACE=="par_substance"],
+    rgy = pgs_mh_abcd$r[pgs_mh_abcd$outcome=="ext"],
+    n = 4662,
+    h2 = 0.09,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+
+# Parental criminality: 100%
+gsens_ext_par_crim <- 
+  gsensY_prop(
+    rxy = ace_mh_abcd$r[ace_mh_abcd$ACE=="par_criminal" & ace_mh_abcd$outcome=="ext"],
+    rgx = pgs_ace_abcd$r[pgs_ace_abcd$ACE=="par_criminal"],
+    rgy = pgs_mh_abcd$r[pgs_mh_abcd$outcome=="ext"],
+    n = 4662,
+    h2 = 0.09)  # do not constrain as will not calculate SEs if constraining
+
+# Parental separation: 100%
+gsens_ext_par_sep <- 
+  gsensY_prop(
+    rxy = ace_mh_abcd$r[ace_mh_abcd$ACE=="par_sep" & ace_mh_abcd$outcome=="ext"],
+    rgx = pgs_ace_abcd$r[pgs_ace_abcd$ACE=="par_sep"],
+    rgy = pgs_mh_abcd$r[pgs_mh_abcd$outcome=="ext"],
+    n = 4662,
+    h2 = 0.09,
+    constrain = 'bgx*bgy < bgx*bgy+bxy') 
+```
+
+## ABCD - Pool gsens results using all PGSs and format for table/plot
+```{r}
+## Internalising problems
+# Apply function to extract gsens results into a table
+gsens_int_abcd <- format_gsens_res(gsens_int_mal, gsens_int_dom_vi, gsens_int_par_psych,
+                              gsens_int_par_sub, gsens_int_par_crim, gsens_int_par_sep)
+
+# Ensure upper limit CI is not over 1
+gsens_int_abcd$ci.upper.Prop[gsens_int_abcd$ci.upper.Prop>1] <- 1
+
+# Apply function to aggregate gsens results
+round(agg_res(gsens_int_abcd, mean_ace_cor_abcd, 4662),4)*100
+
+# Return min and max
+subset(gsens_int_abcd, est.Prop == min(est.Prop), select=c(ACE, est.Prop)) 
+subset(gsens_int_abcd, est.Prop == max(est.Prop), select=c(ACE, est.Prop)) 
+
+## Externalising problems
+# Apply function to extract gsens results into a table
+gsens_ext_abcd <- format_gsens_res(gsens_ext_mal, gsens_ext_dom_vi, gsens_ext_par_psych,
+                              gsens_ext_par_sub, gsens_ext_par_crim, gsens_ext_par_sep)
+# Apply function to aggregate gsens results
+round(agg_res(gsens_ext_abcd, mean_ace_cor_abcd, 4662),4)*100 
+# Return min and max
+subset(gsens_ext_abcd, est.Prop == min(est.Prop), select=c(ACE, est.Prop)) 
+subset(gsens_ext_abcd, est.Prop == max(est.Prop), select=c(ACE, est.Prop)) 
+
+# Ensure estimate and upper limit CI is not over 1
+gsens_ext_abcd$est.Prop[gsens_ext_abcd$est.Prop>1] <- 1
+gsens_ext_abcd$ci.upper.Prop[gsens_ext_abcd$ci.upper.Prop>1] <- 1
+
+# Combine internalising and externalising results for table
+gsens_abcd <- rbind(gsens_int_abcd, gsens_ext_abcd)
+gsens_abcd$outcome <- c(rep("internalising", 6), rep("externalising", 6))
+
+# Combine effect estimates and CIs into a single cell
+gsens_abcd$Adjusted <- paste_res(gsens_abcd$`est.Adjusted Bxy`, gsens_abcd$`ci.lower.Adjusted Bxy`, gsens_abcd$`ci.upper.Adjusted Bxy`)
+gsens_abcd$GeneticConfounding <- paste_res(gsens_abcd$`est.Genetic confounding`, gsens_abcd$`ci.lower.Genetic confounding`, gsens_abcd$`ci.upper.Genetic confounding`)
+gsens_abcd$Total <- paste_res(gsens_abcd$`est.Total effect`, gsens_abcd$`ci.lower.Total effect`, gsens_abcd$`ci.upper.Total effect`)
+gsens_abcd$Prop <- paste_res(gsens_abcd$est.Prop, gsens_abcd$ci.lower.Prop, gsens_abcd$ci.upper.Prop)
+
+# Condense dataframe
+gsens_abcd <- gsens_abcd[,c("ACE", "Total", "Adjusted", "GeneticConfounding", "Prop")]
+aces_labels <- c(maltreatment="Maltreatment", domestic_violence="Domestic violence", par_psych="Parental mental illness", 
+                 par_substance="Parental substance abuse", par_sep="Parental separation", par_criminal="Parental criminality")
+gsens_abcd$ACE <- as.character(aces_labels[gsens_abcd$ACE])
+gsens_abcd
+```
+
+## Make table with ALSPAC and ABCD results for all PGSs for hypothesis 2b
+```{r}
+####### Combine ALSPAC and ABCD gsens results into a table
+gsens_table <- cbind(gsens_alspac, gsens_abcd[,-1])
+
+kable(gsens_table, col.names = c("", "Total association", "Adjusted association", "Genetic confounding", 
+                             "Prop.\ngenetically confounded", 
+                             "Total association", "Adjusted association", "Genetic confounding", 
+                             "Prop.\ngenetically confounded")) %>% 
+  kable_styling(font_size = 13) %>%
+  #column_spec(1, width="20em", color="black", include_thead = T) %>%
+  #column_spec(2:5, width="15em",  color="black", include_thead = T) %>%
+  pack_rows("Internalising problems", 1, 6, label_row_css = "color:black") %>%
+  pack_rows("Externalising problems", 7, 12, label_row_css = "color:black") %>%
+  add_header_above(c(" ", "ALSPAC" = 4, "ABCD" = 4))
+```
