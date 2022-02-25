@@ -101,6 +101,66 @@ a.out_abcd <- transform(a.out_abcd, ADHD_PGS_r = scale(ADHD_PGS_r),
                    schizophrenia_PGS_r = scale(schizophrenia_PGS_r))
 ```
 
+# Descriptive statistics
+```{r}
+### Prevalence of ACEs
+
+## ALSPAC
+# Combine imputed datasets into one big data frame with bind_rows(), following guidance: https://www.andrewheiss.com/blog/2018/03/07/amelia-tidy-melding/
+all_imputations_alspac <- as.data.frame(bind_rows(unclass(a.out_alspac$imputations), .id = "m") %>%
+  group_by(m))
+
+# Maltreatment
+p1 <- as.numeric(round(as.matrix(prop.table(table(all_imputations_alspac$maltreatment_0_9.5yrs))[2]),4)*100)
+# Domestic violence
+p2 <- as.numeric(round(as.matrix(prop.table(table(all_imputations_alspac$violence_between_parents_0_9.5yrs))[2]),4)*100)
+# Parental mental illness
+p3 <- as.numeric(round(as.matrix(prop.table(table(all_imputations_alspac$mental_health_problems_or_suicide_0_9.5yrs))[2]),4)*100)
+# Parental substance abuse
+p4 <- as.numeric(round(as.matrix(prop.table(table(all_imputations_alspac$substance_household_0_9.5yrs))[2]),4)*100)
+# Parental criminality
+p5 <- as.numeric(round(as.matrix(prop.table(table(all_imputations_alspac$parent_convicted_offence_0_9.5yrs))[2]),4)*100)
+# Parental separation
+p6 <- as.numeric(round(as.matrix(prop.table(table(all_imputations_alspac$parental_separation_0_9.5yrs))[2]),4)*100)
+
+prev_aces_alspac_i <- data.frame(ACE=c("Maltreatment", "Domestic violence", "Parental mental illness",
+                              "Parental substance abuse", "Parental criminality", "Parental separation"),
+                               Perc = c(p1, p2, p3, p4, p5, p6))
+
+
+### ABCD
+all_imputations_abcd <- bind_rows(unclass(a.out_abcd$imputations), .id = "m") %>%
+  group_by(m) 
+
+# Maltreatment
+p1 <- as.numeric(round(as.matrix(prop.table(table(all_imputations_abcd$maltreatment_r))[2]),4)*100)
+# Domestic violence
+p2 <- as.numeric(round(as.matrix(prop.table(table(all_imputations_abcd$domestic_violence))[2]),4)*100)
+# Parental mental illness
+p3 <- as.numeric(round(as.matrix(prop.table(table(all_imputations_abcd$parental_psychopathology))[2]),4)*100)
+# Parental substance abuse
+p4 <- as.numeric(round(as.matrix(prop.table(table(all_imputations_abcd$parental_substance))[2]),4)*100)
+# Parental criminality
+p5 <- as.numeric(round(as.matrix(prop.table(table(all_imputations_abcd$parental_criminality))[2]),4)*100)
+# Parental separation
+p6 <- as.numeric(round(as.matrix(prop.table(table(all_imputations_abcd$parental_separation))[2]),4)*100)
+
+prev_aces_abcd_i <- data.frame(ACE=c("Maltreatment", "Domestic violence", "Parental mental illness",
+                              "Parental substance abuse", "Parental criminality", "Parental separation"),
+                               Perc = c(p1, p2, p3, p4, p5, p6))
+
+# combine dataframes
+prev_aces_i <- rbind(prev_aces_alspac_i, prev_aces_abcd_i)
+
+library(kableExtra)
+kable(prev_aces_i) %>% 
+  kable_styling(font_size = 11) %>% 
+  pack_rows("ALSPAC", 1, 6, label_row_css = "color:black") %>%
+  pack_rows("ABCD", 7, 12, label_row_css = "color:black")
+
+# State we do not present descriptives for int / ext and PGSs as these variables were standardised to mean=0, SD=1
+```
+
 # Hypothesis 1A
 
 ## Define function to format results for the association between PGSs for psychopathology and ACEs
@@ -159,7 +219,7 @@ domestic_violence <- format_res(adhd, alcohol, antisocial, anxiety, autism, bipo
 ```
 
 ```{r}
-# Parental mental illness violence
+# Parental mental illness 
 adhd <- zelig(mental_health_problems_or_suicide_0_9.5yrs ~ ADHD_PGS_r + sex, model="logit", data=a.out_alspac, cite=FALSE)
 alcohol <- zelig(mental_health_problems_or_suicide_0_9.5yrs ~ alcohol_PGS_r + sex, model="logit", data=a.out_alspac, cite=FALSE)
 antisocial <- zelig(mental_health_problems_or_suicide_0_9.5yrs ~ antisocial_PGS_r + sex, model="logit", data=a.out_alspac, cite=FALSE)
@@ -315,7 +375,10 @@ long_results <- long_results[order(long_results$ace),]
 # Make separate dataframe containing polygenic score and p-values (this is to include in the forest plot)
 df_forest <- data.frame(long_results$PGS, long_results$p_fdr)
 rownames(df_forest) <- rownames(long_results)
-df_forest$long_results.p_fdr <- format(round(df_forest$long_results.p_fdr, 4), nsmall=4)
+# round p-values to 4DP for those greater than 0.0000 and edit other p-value annotation
+df_forest$long_results.p_fdr[df_forest$long_results.p_fdr>0.00001] <- format(round(df_forest$long_results.p_fdr[df_forest$long_results.p_fdr>0.00001], 4), nsmall=4)
+df_forest$long_results.p_fdr[df_forest$long_results.p_fdr=="1.35571553983027e-11"] <- "1.36e-11"
+df_forest$long_results.p_fdr[df_forest$long_results.p_fdr=="3.95759638927018e-06"] <- "3.96e-06"
 
 # The forest plot will also include results for the associations between negative control polygenic scores and ACEs
 # Next: run regressions between negative control polygenic scores and ACEs
@@ -710,7 +773,16 @@ long_results <- long_results[order(long_results$ace),]
 # Make dataframe containing polygenic score and p-values 
 df_forest <- data.frame(long_results$PGS, long_results$p_fdr) 
 rownames(df_forest) <- rownames(long_results) # make rownames the ACE and PGS to identify which ACE
-df_forest$long_results.p_fdr <- format(round(df_forest$long_results.p_fdr, 4), nsmall=4) # round to 4dp
+# round p-values to 4DP for those greater than 0.0001 and edit other p-value annotation
+df_forest$long_results.p_fdr[df_forest$long_results.p_fdr>0.0001] <- format(round(df_forest$long_results.p_fdr[df_forest$long_results.p_fdr>0.0001], 4), nsmall=4)
+# Manually edit those very small p-values to avoid them saying 0.0000
+df_forest$long_results.p_fdr[df_forest$long_results.p_fdr=="4.79747441772815e-09"] <- "4.80e-09"
+df_forest$long_results.p_fdr[df_forest$long_results.p_fdr=="1.12966340282128e-07"] <- "1.13e-07"
+df_forest$long_results.p_fdr[df_forest$long_results.p_fdr=="2.90391973312154e-05"] <- "2.90e-05"
+df_forest$long_results.p_fdr[df_forest$long_results.p_fdr=="6.08309914960081e-05"] <- "6.08e-05"
+df_forest$long_results.p_fdr[df_forest$long_results.p_fdr=="5.10857013605711e-05"] <- "5.11e-05"
+df_forest$long_results.p_fdr[df_forest$long_results.p_fdr=="2.49140335029097e-08"] <- "2.49e-08"
+df_forest$long_results.p_fdr[df_forest$long_results.p_fdr=="1.53164430471975e-05"] <- "1.53e-05"
 ```
 
 ## ABCD - Association between negative control PGSs and ACEs
@@ -3358,6 +3430,7 @@ gsens_ext_par_sep <-
     h2 = 0.09, 
     constrain = 'bgx*bgy < bgx*bgy+bxy') 
 ```
+
 
 ### Pool gsens results using all PGSs and format for table/plot
 ```{r}

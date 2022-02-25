@@ -106,6 +106,70 @@ abcd_CC$depression_PGS_r <- scale(abcd_CC$depression_PGS_r)
 abcd_CC$schizophrenia_PGS_r <- scale(abcd_CC$schizophrenia_PGS_r)
 abcd_CC$handedness_PGS_r <- scale(abcd_CC$handedness_PGS_r)
 abcd_CC$cataracts_PGS_r <- scale(abcd_CC$cataracts_PGS_r)
+
+
+
+
+## ALSPAC
+
+# Maltreatment
+n1 <- round(as.matrix(table(alspac_CC$maltreatment_0_9.5yrs)[2],0))
+p1 <- as.numeric(round(as.matrix(prop.table(table(alspac_CC$maltreatment_0_9.5yrs))[2]),4)*100)
+# Domestic violence
+n2 <- round(as.matrix(table(alspac_CC$violence_between_parents_0_9.5yrs)[2],0))
+p2 <- as.numeric(round(as.matrix(prop.table(table(alspac_CC$violence_between_parents_0_9.5yrs))[2]),4)*100)
+# Parental mental illness
+n3 <- round(as.matrix(table(alspac_CC$mental_health_problems_or_suicide_0_9.5yrs)[2],0))
+p3 <- as.numeric(round(as.matrix(prop.table(table(alspac_CC$mental_health_problems_or_suicide_0_9.5yrs))[2]),4)*100)
+# Parental substance abuse
+n4 <- round(as.matrix(table(alspac_CC$substance_household_0_9.5yrs)[2],0))
+p4 <- as.numeric(round(as.matrix(prop.table(table(alspac_CC$substance_household_0_9.5yrs))[2]),4)*100)
+# Parental criminality
+n5 <- round(as.matrix(table(alspac_CC$parent_convicted_offence_0_9.5yrs)[2],0))
+p5 <- as.numeric(round(as.matrix(prop.table(table(alspac_CC$parent_convicted_offence_0_9.5yrs))[2]),4)*100)
+# Parental separation
+n6 <- round(as.matrix(table(alspac_CC$parental_separation_0_9.5yrs)[2],0))
+p6 <- as.numeric(round(as.matrix(prop.table(table(alspac_CC$parental_separation_0_9.5yrs))[2]),4)*100)
+
+prev_aces_alspac_c <- data.frame(ACE=c("Maltreatment", "Domestic violence", "Parental mental illness",
+                              "Parental substance abuse", "Parental criminality", "Parental separation"),
+                               N = c(n1, n2, n3, n4, n5, n6),
+                               Perc = c(p1, p2, p3, p4, p5, p6))
+
+
+### ABCD
+
+# Maltreatment
+n1 <- round(as.matrix(table(abcd_CC$maltreatment)/50)[2],0)
+p1 <- as.numeric(round(as.matrix(prop.table(table(abcd_CC$maltreatment))[2]),4)*100)
+# Domestic violence
+n2 <- round(as.matrix(table(abcd_CC$domestic_violence)/50)[2],0)
+p2 <- as.numeric(round(as.matrix(prop.table(table(abcd_CC$domestic_violence))[2]),4)*100)
+# Parental mental illness
+n3 <- round(as.matrix(table(abcd_CC$parental_psychopathology)/50)[2],0)
+p3 <- as.numeric(round(as.matrix(prop.table(table(abcd_CC$parental_psychopathology))[2]),4)*100)
+# Parental substance abuse
+n4 <- round(as.matrix(table(abcd_CC$parental_substance)/50)[2],0)
+p4 <- as.numeric(round(as.matrix(prop.table(table(abcd_CC$parental_substance))[2]),4)*100)
+# Parental criminality
+n5 <- round(as.matrix(table(abcd_CC$parental_criminality)/50)[2],0)
+p5 <- as.numeric(round(as.matrix(prop.table(table(abcd_CC$parental_criminality))[2]),4)*100)
+# Parental separation
+n6 <- round(as.matrix(table(abcd_CC$parental_separation)/50)[2],0)
+p6 <- as.numeric(round(as.matrix(prop.table(table(abcd_CC$parental_separation))[2]),4)*100)
+
+prev_aces_abcd_c <- data.frame(ACE=c("Maltreatment", "Domestic violence", "Parental mental illness",
+                              "Parental substance abuse", "Parental criminality", "Parental separation"),
+                               N = c(n1, n2, n3, n4, n5, n6),
+                               Perc = c(p1, p2, p3, p4, p5, p6))
+
+# combine dataframes
+prev_aces_i <- rbind(prev_aces_alspac_i, prev_aces_abcd_i)
+
+library(kableExtra)
+kable(prev_aces_i) %>% 
+  kable_styling(font_size = 13) 
+
 ```
 
 # Hypothesis 1A
@@ -318,7 +382,11 @@ long_results <- long_results[order(long_results$ace),]
 # Make separate dataframe containing polygenic score and p-values (this is to include in the forest plot)
 df_forest_ace <- data.frame(long_results$PGS, long_results$p_fdr)
 rownames(df_forest_ace) <- rownames(long_results)
-df_forest_ace$long_results.p_fdr <- format(round(df_forest_ace$long_results.p_fdr, 4), nsmall=4)
+
+# round p-values to 4DP for those greater than 0.0000 and edit other p-value annotation
+df_forest_ace$long_results.p_fdr[df_forest_ace$long_results.p_fdr>0.0001] <- format(round(df_forest_ace$long_results.p_fdr[df_forest_ace$long_results.p_fdr>0.0001], 4), nsmall=4)
+df_forest_ace$long_results.p_fdr[df_forest_ace$long_results.p_fdr=="4.34227255746934e-05"] <- "4.34e-05"
+df_forest_ace$long_results.p_fdr[df_forest_ace$long_results.p_fdr=="9.48771263746785e-11"] <- "9.49e-11"
 
 # The forest plot will also include results for the associations between negative control polygenic scores and ACEs
 # Next: run regressions between negative control polygenic scores and ACEs
@@ -678,7 +746,18 @@ long_results <- long_results[order(long_results$ace),]
 # Make dataframe containing polygenic score and p-values
 df_forest_ace <- data.frame(long_results$PGS, long_results$p_fdr)
 rownames(df_forest_ace) <- rownames(long_results)
-df_forest_ace$long_results.p_fdr <- format(round(df_forest_ace$long_results.p_fdr, 4), nsmall=4)
+
+# round p-values to 4DP for those greater than 0.0000 and edit other p-value annotation
+df_forest_ace$long_results.p_fdr[df_forest_ace$long_results.p_fdr>0.0001] <- format(round(df_forest_ace$long_results.p_fdr[df_forest_ace$long_results.p_fdr>0.0001], 4), nsmall=4)
+df_forest_ace$long_results.p_fdr[df_forest_ace$long_results.p_fdr=="7.70165799081807e-05"] <- "7.70e-05"
+df_forest_ace$long_results.p_fdr[df_forest_ace$long_results.p_fdr=="3.74019469557624e-08"] <- "3.74e-08"
+df_forest_ace$long_results.p_fdr[df_forest_ace$long_results.p_fdr=="1.07702721837569e-07"] <- "1.08e-07"
+df_forest_ace$long_results.p_fdr[df_forest_ace$long_results.p_fdr=="4.04224872010759e-05"] <- "4.04e-05"
+df_forest_ace$long_results.p_fdr[df_forest_ace$long_results.p_fdr=="7.16345611793691e-05"] <- "7.16e-05"
+df_forest_ace$long_results.p_fdr[df_forest_ace$long_results.p_fdr=="8.88951827909361e-06"] <- "8.89e-06"
+df_forest_ace$long_results.p_fdr[df_forest_ace$long_results.p_fdr=="1.07702721837569e-07"] <- "1.08e-07"
+df_forest_ace$long_results.p_fdr[df_forest_ace$long_results.p_fdr=="1.07702721837569e-07"] <- "1.08e-07"
+df_forest_ace$long_results.p_fdr[df_forest_ace$long_results.p_fdr=="3.58616062368893e-05"] <- "3.59e-05"
 ```
 
 ### ABCD - Run regressions for negative controls 
