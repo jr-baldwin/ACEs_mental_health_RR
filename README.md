@@ -40,7 +40,7 @@ and King software. The second [script](https://github.com/jr-baldwin/ACEs_mental
 
 # [3. QC ABCD genetic data and derive polygenic scores](#qc_abcd)
 
-Two scripts are used to QC ABCD genetic data and derive polygenic scores.This
+Two scripts are used to QC ABCD genetic data and derive polygenic scores. The first
 [script](https://github.com/jr-baldwin/ACEs_mental_health_RR/blob/main/3_ABCD_QC_genetic_20220204.sh)
 performs QC of the ABCD genotype data (release 3), using Plink and King
 software. The second [script](https://github.com/jr-baldwin/ACEs_mental_health_RR/blob/main/3b_ABCD_derive_PGS_20220811.sh) derives polygenic scores for mental health problems and negative controls.
