@@ -1,24 +1,10 @@
----
-title: "Derive polygenic scores"
-author: "Jessie Baldwin"
-date: "16/03/2021"
-output: 
- html_document:
-    toc: true
----
-
-```{r setup, include=FALSE}
-knitr::opts_hooks$set(eval = function(options) {
-  if (options$engine == "bash") {
-    options$eval <- FALSE
-  }
-options
-})
-```
+################################################################################
+#################### ALSPAC - Derive polygenic scores ##########################
+################################################################################
 
 ## Access the cluster
-Polygenic scores will be derived using PRSice, via the UCL Myriad cluster.
-```{bash, eval=FALSE}
+# Polygenic scores will be derived using PRSice, via the UCL Myriad cluster.
+
 # ======= Connect via UCL VPN ================
 cd /opt/cisco/anyconnect/bin
 open vpn
@@ -42,48 +28,46 @@ module load r/new
 
 # Specify path for target data
 alspac_data="/lustre/scratch/scratch/ucjujb6/B3219/genetics/1000G_2021-01-25/all1/data/Merged_chromosomes" 
-```
 
 ## PRSice commands 
 
-The next sections will derive functions for deriving polygenic scores in PRSice software, following this [tutorial](https://choishingwan.github.io/PRS-Tutorial/prsice/) from Sam Choi. Relevant commands are detailed below:
+#The next sections will derive functions for deriving polygenic scores in PRSice software, following this [tutorial](https://choishingwan.github.io/PRS-Tutorial/prsice/) from Sam Choi. Relevant commands are detailed below:
 
 #### General
-- prsice: informs PRSice of the location of the PRSice software
+# prsice: informs PRSice of the location of the PRSice software
 
 #### Base file (i.e., GWAS summary statistics) commands
-- base: informs PRSice of the name of the file containing the GWAS summary statistic
-- A1: column in base file containing the effective allele (usually A1, but sometimes A2)
-- A2: column in base file containing the non-effective allele (usually A2, but sometimes A1)
-- snp: column in base file containing the SNP ID
-- bp: column in base file containing the base pair coordinate of SNPs
-- chr: column in base file containing the chromosome information
-- stat: column in base file containing the effect size (either OR or BETA)
-- beta: flag to indicate if GWAS test statistic is a beta
-- or: flag to indicate if GWAS test statistic is an odds ratio
-- pvalue: column in base file containing p-value for association
+# base: informs PRSice of the name of the file containing the GWAS summary statistic
+# A1: column in base file containing the effective allele (usually A1, but sometimes A2)
+# A2: column in base file containing the non-effective allele (usually A2, but sometimes A1)
+# snp: column in base file containing the SNP ID
+# bp: column in base file containing the base pair coordinate of SNPs
+# chr: column in base file containing the chromosome information
+# stat: column in base file containing the effect size (either OR or BETA)
+# beta: flag to indicate if GWAS test statistic is a beta
+# or: flag to indicate if GWAS test statistic is an odds ratio
+# pvalue: column in base file containing p-value for association
 
 #### Target file (i.e., ALSPAC genetic data) commands
-- target: informs PRsice of the name of the genotype file (e.g., for QCd ALSPAC data)
+# target: informs PRsice of the name of the genotype file (e.g., for QCd ALSPAC data)
 
 #### Clumping 
-- clump-kb: the distance for clumping in kb. Clumping removes SNPs in LD with eachother (default: 250kb)
-- clump-r2: the r2 threshold for clumping (default=0.1)
-- clump-p: the p-value threshold for clumping (default=1)
-- ld: the LD reference file. If not provided, will use post-filtered target genotype for LD calculation
-- note: commands of pheno, cov and binary-target are not needed as we are only generating PGS and not testing their associations with outcomes
-- note: we will use the default values for clumping so will not include these commands in the function
+# clump-kb: the distance for clumping in kb. Clumping removes SNPs in LD with eachother (default: 250kb)
+# clump-r2: the r2 threshold for clumping (default=0.1)
+# clump-p: the p-value threshold for clumping (default=1)
+# ld: the LD reference file. If not provided, will use post-filtered target genotype for LD calculation
+# note: commands of pheno, cov and binary-target are not needed as we are only generating PGS and not testing their associations with outcomes
+# note: we will use the default values for clumping so will not include these commands in the function
 
 #### P-value thresholding
-- bar-levels: level of barchart to be plotted (1=all p-values)
-- fastscore: only calculate threshold stated in bar-levels
-- no-regress: do not perform regression analysis and output all PRS (include if only generating PRS)
+# bar-levels: level of barchart to be plotted (1=all p-values)
+# fastscore: only calculate threshold stated in bar-levels
+# no-regress: do not perform regression analysis and output all PRS (include if only generating PRS)
 
 #### Miscellaneous
-- thread max: use the maximum number of threads for speed
+# thread max: use the maximum number of threads for speed
 
 ## Define function for deriving polygenic scores based on summary statistics reporting beta coefficients
-```{bash}
 prsice_beta () { 
 cd /home/ucjujb6/Scratch/Prsice_Files/PRSice_linux_Nov/
 Rscript PRSice.R --dir .\
@@ -102,10 +86,9 @@ Rscript PRSice.R --dir .\
     --thread max \
     --out /home/ucjujb6/Scratch/Prsice_Files/Polygenic_Scores/$Pheno_GWAS/$SumStatGWAS_file$date
 }
-```
+
 
 ## Define function for deriving polygenic scores based on summary statistics reporting odds ratios 
-```{bash}
 prsice_or () { 
 cd /home/ucjujb6/Scratch/Prsice_Files/PRSice_linux_Nov/ 
 Rscript PRSice.R --dir .\
@@ -124,38 +107,36 @@ Rscript PRSice.R --dir .\
     --thread max \
     --out /home/ucjujb6/Scratch/Prsice_Files/Polygenic_Scores/$Pheno_GWAS/$SumStatGWAS_file$date
 }
-```
+
 
 #### Notes on deriving polygenic scores:
 
-For each PGS, need to specify:
+# For each PGS, need to specify:
 
-- $Pheno_GWAS (i.e., phenotype name)
-- $SumStatGWAS_file (i.e., file name with QCd sumstats)
-- $A1 (whether effect allele is A1 or A2; check in csv table)
-- $A2 (whether non-effect allele is A1 or A2; check in csv table)
-- $date (the date)
+# $Pheno_GWAS (i.e., phenotype name)
+# $SumStatGWAS_file (i.e., file name with QCd sumstats)
+# $A1 (whether effect allele is A1 or A2; check in csv table)
+# $A2 (whether non-effect allele is A1 or A2; check in csv table)
+# $date (the date)
 
-```{bash}
 # Set date
 date="20210607"
 echo "$date"
-```
+
 
 ## Derive polygenic scores
 
-Polygenic scores will be derived for the following outcomes:
-
-- Major depressive disorder
-- Anxiety disorder
-- Bipolar disorder
-- Autism
-- ADHD
-- Alcohol use disorder
-- Antisocial behaviour
-- Schizophrenia
-- Handedness (negative control)
-- Cataracts (negative control)
+#Polygenic scores will be derived for the following outcomes:
+# Major depressive disorder
+# Anxiety disorder
+# Bipolar disorder
+# Autism
+# ADHD
+# Alcohol use disorder
+# Antisocial behaviour
+# Schizophrenia
+# Handedness (negative control)
+# Cataracts (negative control)
 
 For each phenotype, need to:
 
@@ -167,7 +148,7 @@ For each phenotype, need to:
 6. Generate the polygenic score
 
 ### Depression
-```{bash}
+
 cd /lustre/scratch/scratch/ucjujb6/SumStats
 1. Set file shortcuts
 Pheno_GWAS="Depression"
@@ -192,10 +173,10 @@ mkdir $Pheno_GWAS
 
 # 6. Generate the polygenic score
 prsice_beta "A1" "A2" "date" "Pheno_GWAS" "SumStatGWAS_file" 
-```
+
 
 ### Anxiety disorder
-```{bash}
+
 cd /lustre/scratch/scratch/ucjujb6/SumStats
 # 1. Set file shortcuts
 Pheno_GWAS="Anxiety"
@@ -221,10 +202,10 @@ mkdir $Pheno_GWAS
 # 6. Generate the polygenic score
 prsice_beta "A1" "A2" "date" "Pheno_GWAS" "SumStatGWAS_file" 
 
-```
+
 
 ### Bipolar disorder 
-```{bash}
+
 cd /lustre/scratch/scratch/ucjujb6/SumStats
 # 1. Set file shortcuts
 Pheno_GWAS="Bipolar"
@@ -249,10 +230,10 @@ mkdir $Pheno_GWAS
 
 # 6. Generate the polygenic score
 prsice_beta "A1" "A2" "date" "Pheno_GWAS" "SumStatGWAS_file" 
-```
+
 
 ### Autism 
-```{bash}
+
 cd /lustre/scratch/scratch/ucjujb6/SumStats
 # 1. Set file shortcuts
 Pheno_GWAS="Autism"
@@ -277,10 +258,10 @@ mkdir $Pheno_GWAS
 
 # 6. Generate the polygenic score
 prsice_or "A1" "A2" "date" "Pheno_GWAS" "SumStatGWAS_file" 
-```
+
 
 ### ADHD 
-```{bash}
+
 cd /lustre/scratch/scratch/ucjujb6/SumStats
 # 1. Set file shortcuts
 Pheno_GWAS="ADHD"
@@ -305,10 +286,10 @@ mkdir $Pheno_GWAS
 
 # 6. Generate the polygenic score
 prsice_or "A1" "A2" "date" "Pheno_GWAS" "SumStatGWAS_file" 
-```
+
 
 ### Alcohol use disorder 
-```{bash}
+
 cd /lustre/scratch/scratch/ucjujb6/SumStats
 # 1. Set file shortcuts
 Pheno_GWAS="Alcohol"
@@ -333,10 +314,10 @@ mkdir $Pheno_GWAS
 
 # 6. Generate the polygenic score
 prsice_beta "A1" "A2" "date" "Pheno_GWAS" "SumStatGWAS_file" 
-```
+
 
 ### Antisocial behaviour 
-```{bash}
+
 cd /lustre/scratch/scratch/ucjujb6/SumStats
 # 1. Set file shortcuts
 Pheno_GWAS="AntisocialBehaviour"
@@ -361,10 +342,10 @@ mkdir $Pheno_GWAS
 
 # 6. Generate the polygenic score
 prsice_beta "A1" "A2" "date" "Pheno_GWAS" "SumStatGWAS_file" 
-```
+
 
 ### Schizophrenia 
-```{bash}
+
 cd /lustre/scratch/scratch/ucjujb6/SumStats
 # 1. Set file shortcuts
 Pheno_GWAS="Schizophrenia"
@@ -389,10 +370,10 @@ mkdir $Pheno_GWAS
 
 # 6. Generate the polygenic score
 prsice_or "A1" "A2" "date" "Pheno_GWAS" "SumStatGWAS_file" 
-```
+
 
 ### Handedness 
-```{bash}
+
 cd /lustre/scratch/scratch/ucjujb6/SumStats
 # 1. Set file shortcuts
 Pheno_GWAS="Handedness"
@@ -418,10 +399,10 @@ mkdir $Pheno_GWAS
 
 # 6. Generate the polygenic score
 prsice_beta "A1" "A2" "date" "Pheno_GWAS" "SumStatGWAS_file" 
-```
+
 
 ### Cataracts 
-```{bash}
+
 cd /lustre/scratch/scratch/ucjujb6/SumStats
 # 1. Set file shortcuts
 Pheno_GWAS="Cataracts"
@@ -446,10 +427,9 @@ mkdir $Pheno_GWAS
 
 # 6. Generate the polygenic score
 prsice_or "A1" "A2" "date" "Pheno_GWAS" "SumStatGWAS_file" 
-```
+
 
 ## Merge all polygenic scores and principal components into one file 
-```{bash}
 R
 library(data.table)
 library(tidyverse)
@@ -514,4 +494,4 @@ dim(PGS_PCs)
 write.csv(PGS_PCs, file="/lustre/scratch/scratch/ucjujb6/Prsice_Files/Polygenic_Scores/all_PGS_PCs_20210607.csv", row.names=FALSE)
 
 q(save="no")
-```
+
