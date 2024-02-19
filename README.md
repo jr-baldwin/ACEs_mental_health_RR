@@ -36,7 +36,7 @@ derive polygenic scores for this study.
 
 Two scripts are used to QC ALSPAC genetic data and derive polygenic scores. The first [script](https://github.com/jr-baldwin/ACEs_mental_health_RR/blob/main/2_ALSPAC_QC_genetic_20220204.sh)
 performs QC of the ALSPAC genotype data (for children only), using Plink
-and King software. The second [script] derives polygenic scores for mental health problems and negative controls.
+and King software. The second [script](https://github.com/jr-baldwin/ACEs_mental_health_RR/blob/main/2b_ALSPAC_derive_PGS_20210607.sh) derives polygenic scores for mental health problems and negative controls.
 
 # [3. QC ABCD genetic data and derive polygenic scores](#qc_abcd)
 
