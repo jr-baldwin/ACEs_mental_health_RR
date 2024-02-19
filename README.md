@@ -12,8 +12,8 @@ in R and shell.
 ## Table of Contents
 
 1.  [QC of GWAS summary statistics](#qc_sumstats)
-2.  [QC of ALSPAC genetic data](#qc_alspac)
-3.  [QC of ABCD genetic data](#qc_abcd)
+2.  [QC ALSPAC genetic data and derive polygenic scores](#qc_alspac)
+3.  [QC ABCD genetic data and derive polygenic scores](#qc_abcd)
 4.  [Derive ACE measures in ALSPAC](#ace_alspac)
 5.  [Derive mental health measures in ALSPAC](#mh_alspac)
 6.  [Derive all measures in the ABCD Study](#measures_abcd)
@@ -32,19 +32,18 @@ This
 performs quality control (QC) on the GWAS summary statistics used to
 derive polygenic scores for this study.
 
-# [2. QC of ALSPAC genetic data](#qc_alspac)
+# [2. QC ALSPAC genetic data and derive polygenic scores](#qc_alspac)
 
-This
-[script](https://github.com/jr-baldwin/ACEs_mental_health_RR/blob/main/2_ALSPAC_QC_genetic_20220204.sh)
+Two scripts are used to QC ALSPAC genetic data and derive polygenic scores. The first [script](https://github.com/jr-baldwin/ACEs_mental_health_RR/blob/main/2_ALSPAC_QC_genetic_20220204.sh)
 performs QC of the ALSPAC genotype data (for children only), using Plink
-and King software.
+and King software. The second [script] derives polygenic scores for mental health problems and negative controls.
 
-# [3. QC of ABCD genetic data](#qc_abcd)
+# [3. QC ABCD genetic data and derive polygenic scores](#qc_abcd)
 
-This
+Two scripts are used to QC ABCD genetic data and derive polygenic scores.This
 [script](https://github.com/jr-baldwin/ACEs_mental_health_RR/blob/main/3_ABCD_QC_genetic_20220204.sh)
 performs QC of the ABCD genotype data (release 3), using Plink and King
-software.
+software. The second [script] derives polygenic scores for mental health problems and negative controls.
 
 # [4. Derive ACE measures in ALSPAC](#ace_alspac)
 
